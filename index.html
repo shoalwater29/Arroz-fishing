@@ -282,8 +282,8 @@
   </header>
 
   <div class="banner" id="banner">
-    Live data couldn't load in this window. If you're viewing this inside a chat preview, download the file and open it in your browser for live wind, pressure and tides.
-    <button id="sampleBtn">Show a sample day instead</button>
+    Live conditions couldn't load<span id="bannerWhy"></span>. Retrying automatically every couple of minutes — or tap Refresh to try now. Check the phone has reception; if this keeps happening on good signal, the detail above is the clue.
+    <button id="sampleBtn">Show a sample day meanwhile</button>
   </div>
 
   <section class="verdict" id="verdict" aria-live="polite">
@@ -825,7 +825,7 @@ async function loadAll(){
     const mURL=k=>`https://marine-api.open-meteo.com/v1/marine?latitude=${WATER_POINTS[k].lat}&longitude=${WATER_POINTS[k].lon}`+
       `&hourly=wave_height,sea_level_height_msl,sea_surface_temperature&timezone=Australia%2FMelbourne&forecast_days=7&past_days=2`;
     const [w,mb,mo,mw]=await Promise.all([
-      fetch(wURL).then(r=>{if(!r.ok)throw 0;return r.json()}),
+      fetch(wURL).then(r=>{if(!r.ok)throw new Error("weather feed answered HTTP "+r.status);return r.json()}),
       fetch(mURL("bay")).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch(mURL("ocean")).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch(mURL("wp")).then(r=>r.ok?r.json():null).catch(()=>null)
@@ -839,9 +839,13 @@ async function loadAll(){
     renderAll();
   }catch(e){
     setStatus("err","Live data unavailable");
-    $("#banner").classList.add("show");
+    const why=$("#bannerWhy");
+    if(why)why.textContent=" ("+((e&&e.message)?e.message:"network error")+")";
+    if(!isSample)$("#banner").classList.add("show");
   }
 }
+/* while not live, keep trying quietly */
+setInterval(()=>{if(weather==null||isSample)loadAll()},120000);
 function findNowIdx(times){const now=Date.now();let best=0,bd=Infinity;
   times.forEach((t,i)=>{const d=Math.abs(new Date(t).getTime()-now);if(d<bd){bd=d;best=i}});return best}
 function setStatus(kind,txt){
