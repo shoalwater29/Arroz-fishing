@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arroz Fishing — Rosebud Fishing Desk</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Arroz Fishing">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#12333F">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{
+    --paper:#F2F7F5; --card:#FFFFFF; --ink:#12333F; --ink-soft:#486571;
+    --tide:#1B7A8C; --tide-soft:#D5E9EC;
+    --go:#2E7D4F; --go-soft:#E2F0E7; --hold:#C98A2B; --hold-soft:#F6ECD9;
+    --stop:#B5432E; --stop-soft:#F5E2DD; --line:#C9DAD6;
+    --display:"Futura","Jost","Century Gothic","Trebuchet MS",sans-serif;
+    --body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+  a{color:var(--tide)}
+  button{font-family:var(--body);cursor:pointer}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 18px 60px}
+
+  header.masthead{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;
+    border-bottom:3px solid var(--ink);padding-bottom:12px;margin-bottom:18px}
+  .logo{display:inline-block;line-height:1}
+  .logo img{height:64px;width:auto;display:block}
+  .logo-sub{display:block;margin-top:-4px;padding-left:41%;font-size:13px;letter-spacing:7px;
+    color:var(--ink-soft);font-family:var(--body)}
+  .logo-tag{font-size:12px;color:var(--ink-soft);margin-top:5px}
+  @media(max-width:600px){.logo img{height:52px}.logo-sub{font-size:11.5px;letter-spacing:5px}}
+  .masthead .meta{color:var(--ink-soft);font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--hold);margin-right:5px;vertical-align:1px}
+  .status-dot.live{background:var(--go)} .status-dot.err{background:var(--stop)}
+  .btn{border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:6px;
+    padding:5px 12px;font-size:13px;font-weight:600;text-decoration:none;display:inline-block}
+  .btn:hover{background:var(--ink);color:#fff}
+  .btn.primary{background:var(--tide);border-color:var(--tide);color:#fff}
+  .btn.primary:hover{background:var(--ink);border-color:var(--ink)}
+
+  .banner{display:none;background:var(--hold-soft);border:1px solid var(--hold);border-radius:8px;
+    padding:10px 14px;font-size:13.5px;margin-bottom:16px}
+  .banner.show{display:block}
+  .banner button{margin-left:8px;border:1px solid var(--ink);background:#fff;border-radius:5px;padding:2px 9px;font-size:12.5px}
+
+  .verdict{background:var(--ink);color:#fff;border-radius:10px;padding:22px 24px;margin-bottom:18px;
+    display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;
+    background-image:repeating-linear-gradient(115deg,transparent 0 42px,rgba(255,255,255,.035) 42px 44px)}
+  .verdict .word{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,36px);line-height:1.08}
+  .verdict .word.go{color:#8FD9AC}.verdict .word.hold{color:#F1C77E}.verdict .word.stop{color:#F0A18C}
+  .verdict .reason{margin-top:6px;font-size:14.5px;color:#C9DDE3;max-width:66ch}
+  .vmeta{margin-top:10px;font-size:13px;color:#9FC5CE;display:flex;gap:18px;flex-wrap:wrap}
+  .vmeta b{color:#fff;font-weight:600}
+  .verdict .picks{display:flex;flex-direction:column;gap:8px;min-width:250px}
+  .pick{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.22);border-radius:7px;padding:8px 12px;font-size:13px}
+  .pick b{display:block;font-size:14px;margin-top:1px}
+  .pick .k{color:#9FC5CE;font-size:12px}
+
+  .cols{display:grid;grid-template-columns:340px 1fr;gap:18px}
+  @media(max-width:900px){.cols{display:flex;flex-direction:column}.cols main{order:1}.cols aside{order:2}.verdict{grid-template-columns:1fr}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 16px 14px;margin-bottom:16px}
+  .card h2{font-family:var(--display);font-weight:700;font-size:17px;margin-bottom:10px;letter-spacing:.2px}
+  .card h2 small{font-family:var(--body);font-weight:400;color:var(--ink-soft);font-size:12.5px;margin-left:6px}
+
+  .compass-row{display:flex;gap:14px;align-items:center}
+  .wind-nums{flex:1}
+  .wind-nums .big{font-family:var(--display);font-size:36px;font-weight:700;line-height:1}
+  .wind-nums .big small{font-size:15px;font-weight:400;color:var(--ink-soft)}
+  .wind-nums .sub{color:var(--ink-soft);font-size:13px;margin-top:4px}
+  .spark{margin-top:10px}
+  .spark-label{font-size:11.5px;color:var(--ink-soft)}
+
+  .baro-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .baro-top .big{font-family:var(--display);font-size:34px;font-weight:700}
+  .baro-top .big small{font-size:14px;font-weight:400;color:var(--ink-soft)}
+  .trend{font-size:13px;font-weight:700;border-radius:5px;padding:2px 9px}
+  .trend.go{background:var(--go-soft);color:var(--go)}
+  .trend.hold{background:var(--hold-soft);color:var(--hold)}
+  .trend.stop{background:var(--stop-soft);color:var(--stop)}
+  .baro-verdict{font-size:13px;color:var(--ink-soft);margin-top:6px}
+
+  .tide-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .tide-tabs button{border:1px solid var(--line);background:var(--paper);border-radius:16px;padding:3px 12px;font-size:12.5px;color:var(--ink-soft)}
+  .tide-tabs button.on{background:var(--tide);border-color:var(--tide);color:#fff;font-weight:600}
+  .tide-events{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .tide-ev{background:var(--tide-soft);border-radius:6px;padding:6px 10px;font-size:12.5px}
+  .tide-ev b{font-size:13.5px}
+  .tide-now{font-size:13px;color:var(--ink-soft);margin-top:8px}
+
+  .sea-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .sea-cell{background:var(--paper);border-radius:6px;padding:8px 10px;font-size:12.5px;color:var(--ink-soft)}
+  .sea-cell b{display:block;color:var(--ink);font-size:16px;font-family:var(--display)}
+
+  .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+  .seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:7px;overflow:hidden}
+  .seg button{background:var(--card);border:none;padding:6px 14px;font-size:13.5px;font-weight:600;color:var(--ink)}
+  .seg button.on{background:var(--ink);color:#fff}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:4px 12px;font-size:12.5px;color:var(--ink-soft)}
+  .chip.on{background:var(--tide);border-color:var(--tide);color:#fff;font-weight:600}
+
+  /* Playbook */
+  .playbook{border-left:4px solid var(--tide)}
+  .pb-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px}
+  .pb-head h3{font-family:var(--display);font-size:18px}
+  .pb-window{font-size:13px;background:var(--tide-soft);border-radius:6px;padding:3px 10px;font-weight:600;color:var(--tide)}
+  .pb-grid{display:grid;grid-template-columns:82px 1fr;gap:4px 12px;margin-top:9px;font-size:13.5px}
+  .pb-grid dt{color:var(--ink-soft);font-weight:600}
+  .pb-grid dd{margin:0}
+  .pb-note{font-size:12.5px;color:var(--ink-soft);margin-top:8px}
+
+  .spot{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px;
+    display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:start}
+  .score{width:64px;text-align:center}
+  .score .lbl{font-size:10.5px;font-weight:700;margin-top:2px;letter-spacing:.2px}
+  .score .lbl.go{color:var(--go)}.score .lbl.hold{color:var(--hold)}.score .lbl.stop{color:var(--stop)}
+  .spot h3{font-family:var(--display);font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .tag{font-family:var(--body);font-size:11px;font-weight:700;border-radius:4px;padding:2px 7px}
+  .tag.land{background:var(--go-soft);color:var(--go)}
+  .tag.boat{background:var(--tide-soft);color:var(--tide)}
+  .tag.drive{background:var(--paper);color:var(--ink-soft);font-weight:500}
+  .why{font-size:13.5px;margin-top:4px}
+  .why .good{color:var(--go);font-weight:600}
+  .why .warn{color:var(--stop);font-weight:600}
+  .prob-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .prob{font-size:12px;border-radius:12px;padding:2px 10px;font-weight:700}
+  .prob.go{background:var(--go-soft);color:var(--go)}
+  .prob.hold{background:var(--hold-soft);color:var(--hold)}
+  .prob.stop{background:var(--stop-soft);color:var(--stop)}
+  .prob.dim{background:var(--paper);color:var(--ink-soft);font-weight:600}
+  .notes{font-size:12.5px;color:var(--ink-soft);margin-top:6px}
+  .spot-more{margin-top:6px}
+  .spot-more summary{font-size:12px;color:var(--tide);font-weight:600;cursor:pointer;list-style-position:inside}
+  .spot-more .notes{margin-top:3px}
+  .maplinks{margin-top:7px;font-size:12.5px;display:flex;gap:12px;flex-wrap:wrap}
+  .maplinks a{font-weight:600;text-decoration:none;border-bottom:1.5px solid var(--tide-soft)}
+  .maplinks a:hover{border-bottom-color:var(--tide)}
+
+  .pb-links{margin-top:9px;font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap}
+  .pb-links a{font-weight:600;text-decoration:none;border-bottom:1.5px solid var(--tide-soft)}
+  .pb-links a:hover{border-bottom-color:var(--tide)}
+
+  .riglist{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .riglist a{display:block;background:var(--paper);border-radius:6px;padding:7px 10px;font-size:12.5px;
+    font-weight:600;color:var(--ink);text-decoration:none;border:1px solid transparent}
+  .riglist a:hover{border-color:var(--tide);color:var(--tide)}
+  .riglist a small{display:block;font-weight:400;color:var(--ink-soft);font-size:11px}
+
+  .rig-overlay{position:fixed;inset:0;background:rgba(18,51,63,.55);display:none;
+    align-items:center;justify-content:center;z-index:50;padding:16px}
+  .rig-overlay.open{display:flex}
+  .rig-box{background:var(--card);border-radius:12px;max-width:540px;width:100%;
+    padding:16px 20px 18px;max-height:92vh;overflow:auto}
+  .rig-box .rig-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px}
+  .rig-box h3{font-family:var(--display);font-size:19px}
+  .rig-box .rig-close{border:1.5px solid var(--ink);background:var(--card);border-radius:6px;
+    padding:3px 11px;font-size:13px;font-weight:600}
+  .rig-box .rig-close:hover{background:var(--ink);color:#fff}
+  .rig-box svg{width:100%;height:auto;background:var(--paper);border-radius:8px;margin-top:8px}
+  .rig-box .rig-note{font-size:12.5px;color:var(--ink-soft);margin-top:9px}
+  .rig-box .rig-more{font-size:12.5px;margin-top:8px}
+
+  table.plan{width:100%;border-collapse:collapse;font-size:13px}
+  .plan th{text-align:left;font-family:var(--display);font-size:13px;border-bottom:2px solid var(--ink);padding:6px 8px}
+  .plan td{border-bottom:1px solid var(--line);padding:8px 8px;vertical-align:top}
+  .plan .day{font-weight:700;white-space:nowrap}
+  .plan .windcell{white-space:nowrap}
+  .badge{display:inline-block;border-radius:5px;padding:1px 7px;font-size:11.5px;font-weight:700}
+  .badge.go{background:var(--go-soft);color:var(--go)}
+  .badge.hold{background:var(--hold-soft);color:var(--hold)}
+  .badge.stop{background:var(--stop-soft);color:var(--stop)}
+
+  footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;font-size:12px;color:var(--ink-soft);max-width:82ch}
+  footer p{margin-bottom:6px}
+  /* Map */
+  #map{height:380px;border-radius:8px;z-index:0;background:var(--paper)}
+  .map-note{font-size:12px;color:var(--ink-soft);margin-top:8px}
+  .hab-legend{margin-top:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+  .hab-legend summary{padding:8px 12px;font-size:13px;font-weight:700;color:var(--tide);cursor:pointer;list-style-position:inside}
+  .hab-legend-body{padding:0 12px 12px;font-size:12.5px;color:var(--ink-soft)}
+  .hab-legend-body p{margin-bottom:8px}
+  .hab-legend-body b{color:var(--ink)}
+  .hab-legend-body img{display:block;max-width:100%;background:#fff;border:1px solid var(--line);border-radius:6px;
+    padding:8px;max-height:340px;overflow:auto;object-fit:contain;object-position:top left}
+  .hab-legend-note{margin-top:8px;font-size:11.5px}
+  .mk-pop{font-size:13px;font-family:var(--body);color:var(--ink)}
+  .mk-pop b{font-family:var(--display);font-size:14.5px}
+  .mk-pop .prob{margin:2px 4px 2px 0;display:inline-block}
+  .mk-coord{font-family:Consolas,Menlo,monospace;font-size:12px;background:var(--paper);padding:2px 6px;border-radius:4px}
+  .mk-copy{border:1px solid var(--line);background:#fff;border-radius:4px;font-size:11px;padding:1px 8px;margin-left:5px;cursor:pointer}
+  .mk-copy:hover{border-color:var(--tide);color:var(--tide)}
+  .mk-links{margin-top:5px}
+  .mk-links a{font-size:12px;margin-right:12px;font-weight:600}
+  .stx{font-size:15px;line-height:16px;text-align:center;text-shadow:0 0 3px #fff,0 0 3px #fff;cursor:pointer}
+  .stx.artificial{color:var(--tide)}
+  .stx.natural{color:var(--ink)}
+  .stx.shellfish{color:var(--go)}
+  .stx.notake{color:var(--stop)}
+  .stx.wreck{color:#7A4E9E}
+  .dlbl{font-size:10px;font-weight:700;color:var(--ink);background:rgba(255,255,255,.82);
+    border-radius:3px;padding:0 3px;line-height:13px;white-space:nowrap;border:1px solid var(--line)}
+  .rampic{width:17px;height:17px;border-radius:4px;background:var(--ink);color:#fff;
+    font-size:11px;font-weight:800;line-height:17px;text-align:center;
+    box-shadow:0 0 0 2px #fff;font-family:var(--display)}
+  .reports a{display:block;background:var(--paper);border-radius:6px;padding:7px 10px;
+    font-size:12.5px;font-weight:600;color:var(--ink);text-decoration:none;margin-bottom:6px;
+    border:1px solid transparent}
+  .reports a:hover{border-color:var(--tide);color:var(--tide)}
+  .reports a small{display:block;font-weight:400;color:var(--ink-soft);font-size:11px}
+  .stx-key{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-soft);margin-top:6px}
+  .stx-key span b{font-size:13px;vertical-align:-1px}
+  .mk-pop .warn{color:var(--stop);font-weight:700}
+  .spring-chip{display:inline-block;font-size:11px;font-weight:700;border-radius:5px;padding:2px 8px;margin-left:8px;vertical-align:2px}
+  .spring-chip.spring{background:var(--tide);color:#fff}
+  .spring-chip.neap{background:var(--tide-soft);color:var(--tide)}
+  .spring-chip.mid{background:var(--paper);color:var(--ink-soft)}
+  /* Catch log */
+  .log-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+  .log-form label{font-size:11.5px;color:var(--ink-soft);display:block;margin-bottom:2px;font-weight:600}
+  .log-form select,.log-form input{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;
+    font-size:13px;font-family:var(--body);background:#fff;color:var(--ink)}
+  .log-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 12px}
+  .log-actions .count{font-size:12.5px;color:var(--ink-soft);margin-left:auto}
+  table.logt{width:100%;border-collapse:collapse;font-size:12.5px}
+  .logt th{text-align:left;font-family:var(--display);font-size:12.5px;border-bottom:2px solid var(--ink);padding:5px 7px}
+  .logt td{border-bottom:1px solid var(--line);padding:6px 7px;vertical-align:top}
+  .logt .del{border:none;background:none;color:var(--stop);font-size:12px;cursor:pointer;font-weight:700}
+  .calib{font-size:12.5px;color:var(--ink-soft);margin-top:10px;background:var(--paper);border-radius:6px;padding:9px 12px}
+  .filelbl{display:inline-block}
+  .filelbl input{display:none}
+  .limits{display:flex;flex-direction:column;gap:6px}
+  .limit-row{background:var(--paper);border-radius:6px;padding:7px 10px;font-size:12.5px}
+  .limit-row b{font-size:13px}
+  .limit-row .lr{color:var(--ink-soft)}
+  .limit-row .lr em{font-style:normal;color:var(--ink);font-weight:600}
+  .lim-more{margin-top:3px}
+  .lim-more summary{font-size:11.5px;color:var(--tide);font-weight:600;cursor:pointer;list-style-position:inside}
+  .lim-more div{font-size:12px;color:var(--ink-soft);margin-top:3px}
+  .fc-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+  .fc-day{background:var(--paper);border-radius:8px;padding:10px 8px;text-align:center;font-size:12px;color:var(--ink-soft)}
+  .fc-day .d{font-family:var(--display);font-weight:700;font-size:13px;color:var(--ink)}
+  .fc-day svg{display:block;margin:6px auto 4px;width:36px;height:36px}
+  .fc-day .t{font-size:14px;color:var(--ink)}
+  .fc-day .t b{font-size:15px}
+  .fc-day .r{margin-top:2px}
+  .fc-day .bet{margin-top:6px}
+  .fc-day{cursor:pointer;border:2px solid transparent}
+  .fc-day.on{border-color:var(--tide);background:#fff}
+  .fc-detail{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;
+    display:grid;grid-template-columns:96px 1fr;gap:6px 12px;font-size:13.5px}
+  .fc-detail .k{color:var(--ink-soft);font-weight:600}
+
+  @media (prefers-reduced-motion:no-preference){.needle{transition:transform .8s ease}}
+  :focus-visible{outline:2.5px solid var(--tide);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <div class="logo" role="img" aria-label="Arroz Fishing">
+        <img src="data:image/png;base64,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" alt="Arroz">
+        <span class="logo-sub">fishing</span>
+      </div>
+      <div class="logo-tag">Rosebud fishing desk</div>
+    </div>
+    <div class="meta">
+      <span><span class="status-dot" id="statusDot"></span><span id="statusTxt">Loading conditions</span></span>
+      <span id="stampTxt"></span>
+      <button class="btn" id="refreshBtn">Refresh</button>
+      <a class="btn primary" id="emailBtn" href="#">Email today's plan</a>
+    </div>
+  </header>
+
+  <div class="banner" id="banner">
+    Live data couldn't load in this window. If you're viewing this inside a chat preview, download the file and open it in your browser for live wind, pressure and tides.
+    <button id="sampleBtn">Show a sample day instead</button>
+  </div>
+
+  <section class="verdict" id="verdict" aria-live="polite">
+    <div>
+      <div class="word hold" id="vWord">Reading the water…</div>
+      <div class="reason" id="vReason">Fetching wind, pressure, tide and swell for the southern peninsula.</div>
+      <div class="vmeta" id="vMeta"></div>
+    </div>
+    <div class="picks">
+      <div class="pick"><span class="k">Top bet right now</span><b id="vTop">—</b></div>
+      <div class="pick"><span class="k">Best window next 24 h</span><b id="vWindow">—</b></div>
+    </div>
+  </section>
+
+  <div class="cols">
+    <aside>
+      <div class="card">
+        <h2>Barometer<small>bite driver no. 1</small></h2>
+        <div class="baro-top">
+          <div class="big"><span id="pNow">–</span><small> hPa</small></div>
+          <span class="trend hold" id="pTrend">—</span>
+        </div>
+        <div class="baro-verdict" id="pVerdict">—</div>
+        <div class="spark">
+          <div class="spark-label">Last 12 h and next 24 h</div>
+          <svg id="pSpark" width="100%" height="46" viewBox="0 0 300 46" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Wind<small>at Rosebud</small></h2>
+        <div class="compass-row">
+          <svg id="compassSvg" width="130" height="130" viewBox="0 0 130 130" role="img" aria-label="Wind compass"></svg>
+          <div class="wind-nums">
+            <div class="big"><span id="wSpd">–</span><small> kn</small></div>
+            <div class="sub" id="wDir">—</div>
+            <div class="sub" id="wGust">—</div>
+          </div>
+        </div>
+        <div class="spark">
+          <div class="spark-label">Next 12 hours</div>
+          <svg id="windSpark" width="100%" height="46" viewBox="0 0 300 46" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Tide<span class="spring-chip mid" id="springChip">reading cycle</span></h2>
+        <div class="tide-tabs" id="tideTabs">
+          <button data-w="bay" class="on">Port Phillip</button>
+          <button data-w="ocean">Ocean beaches</button>
+          <button data-w="wp">Western Port</button>
+        </div>
+        <svg id="tideSvg" width="100%" height="90" viewBox="0 0 320 90" preserveAspectRatio="none" role="img" aria-label="Tide curve"></svg>
+        <div class="tide-now" id="tideNow">—</div>
+        <div class="tide-events" id="tideEvents"></div>
+      </div>
+
+      <div class="card">
+        <h2>Sea state</h2>
+        <div class="sea-grid" id="seaGrid"></div>
+      </div>
+
+      <div class="card">
+        <h2>Rig diagrams<small>tap to view</small></h2>
+        <div class="riglist" id="rigList"></div>
+      </div>
+
+      <div class="card">
+        <h2>Bag &amp; size limits<small>Victoria, per person per day</small></h2>
+        <div class="limits" id="limitsList"></div>
+      </div>
+
+      <div class="card">
+        <h2>This week's reports<small>what's actually biting</small></h2>
+        <div class="reports">
+          <a href="https://getfished.fish/vic/" target="_blank" rel="noopener">Getfished Victoria<small>live bite ratings and the latest catch reports, updated every 30 minutes</small></a>
+          <a href="https://fishingmonthly.com.au/" target="_blank" rel="noopener">Fishing Monthly reports<small>weekly Victorian round-ups — look for the Port Phillip and Western Port columns</small></a>
+          <a href="https://www.fishingcamping.com.au/" target="_blank" rel="noopener">The Burley Pot<small>Rosebud tackle-shop report — the most local intel there is</small></a>
+          <a href="https://fishing-victoria.com/" target="_blank" rel="noopener">Fishing Victoria forum<small>angler-posted reports from the piers and grounds, often same-day</small></a>
+        </div>
+        <div class="note" style="margin-top:8px">Skim the last seven days before you pick a spot — fresh local reports beat any model. Log what you find in the catch log below and the chart tracks it over time.</div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="filters">
+        <div class="seg" id="modeSeg" role="group" aria-label="Fishing mode">
+          <button data-m="all" class="on">All</button>
+          <button data-m="land">Land-based</button>
+          <button data-m="boat">Boat</button>
+        </div>
+        <div class="chips" id="speciesChips" role="group" aria-label="Target species"></div>
+      </div>
+
+      <div class="card">
+        <h2>Marks map<small>coloured by current odds · tap a mark</small></h2>
+        <div id="map"></div>
+        <div class="stx-key">
+          <span><b style="color:var(--tide)">▲</b> artificial reef</span>
+          <span><b style="color:var(--go)">▲</b> shellfish reef</span>
+          <span><b style="color:var(--ink)">▲</b> natural reef</span>
+          <span><b style="color:#7A4E9E">▲</b> wreck</span>
+          <span><b style="color:var(--stop)">▲</b> no-take structure</span>
+          <span><b style="font-family:var(--display)">R</b> boat ramp (tap for the live carpark camera)</span>
+          <span>● round marks = fishing spots, coloured by live odds</span>
+        </div>
+        <details class="hab-legend">
+          <summary>Habitat legend (colour code)</summary>
+          <div class="hab-legend-body">
+            <p>The classes that matter most in our waters: <b>seagrass</b> and <b>macroalgae</b> are the weed beds (whiting, squid, garfish country); <b>reef and consolidated substrate</b> holds the snapper; <b>unconsolidated / sand</b> is the flathead drift ground and the patches you cast to inside the weed.</p>
+            <img loading="lazy" alt="Seamap Australia benthic habitat legend, live from the map service"
+              src="https://geoserver.imas.utas.edu.au/geoserver/seamap/wms?SERVICE=WMS&amp;VERSION=1.1.0&amp;REQUEST=GetLegendGraphic&amp;FORMAT=image%2Fpng&amp;LAYER=seamap%3ASeamapAus_National_Benthic_Habitat_Layer&amp;LEGEND_OPTIONS=fontSize%3A11%3BfontAntiAliasing%3Atrue">
+            <p class="hab-legend-note">Legend is served live by Seamap Australia, so the swatches always match the map exactly. It lists every class in the national scheme; only a handful appear in Port Phillip, Western Port and the local coast.</p>
+          </div>
+        </details>
+        <div class="log-actions" style="margin:10px 0 0">
+          <button class="btn" id="gpxBtn">Export marks as GPX</button>
+          <span class="count">Import the GPX into your Navionics Boating app (or any Garmin, Lowrance or Simrad plotter) to see these marks on full SonarChart bathymetry.</span>
+        </div>
+        <div class="map-note">Depth-chart and satellite basemaps by Esri; nautical marks by OpenSeaMap; habitat polygons (seagrass, macroalgae, reef, sand) from <a href="https://seamapaustralia.org" target="_blank" rel="noopener">Seamap Australia</a> — greens are seagrass and algae, the whiting and squid country; toggle it off or switch to Satellite to cross-check the weed edges by eye. Metre depth labels sit beside every mark (toggle them in the layer switcher), and zoomed right in on the Depth chart base, Esri’s own contour figures appear too. Positions are indicative fishing marks, not for navigation. The heaviest ring is the current best bet.</div>
+      </div>
+
+      <div id="playbooks"></div>
+      <div id="spotList"></div>
+
+      <div class="card" style="margin-top:6px">
+        <h2>5-day outlook<small>tap a day for the full plan</small></h2>
+        <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:4px">Overall bite likelihood, hour by hour \u2014 best bet across every species and spot</div>
+        <svg id="outlookChart" width="100%" height="110" viewBox="0 0 640 110" preserveAspectRatio="none" role="img" aria-label="Bite likelihood over the next five days"></svg>
+        <div class="fc-strip" id="fcStrip" style="margin-top:12px"></div>
+        <div class="fc-detail" id="fcDetail"></div>
+      </div>
+
+      <div class="card">
+        <h2>Catch log<small>the model learns from what actually hits the deck</small></h2>
+        <div class="log-form">
+          <div><label for="logSpot">Spot</label><select id="logSpot"></select></div>
+          <div><label for="logSp">Species</label><select id="logSp"></select></div>
+          <div><label for="logCount">Fish landed</label><input id="logCount" type="number" min="0" value="0"></div>
+          <div><label for="logSize">Best size (cm)</label><input id="logSize" type="number" min="0" placeholder="optional"></div>
+          <div style="grid-column:1/-1"><label for="logNotes">Notes</label><input id="logNotes" type="text" placeholder="bait, gutter, what worked…"></div>
+        </div>
+        <div class="log-actions">
+          <button class="btn primary" id="logAdd">Log this session</button>
+          <button class="btn" id="logCsv">Export CSV</button>
+          <button class="btn" id="logJson">Export backup</button>
+          <label class="btn filelbl">Import backup<input type="file" id="logImport" accept=".json"></label>
+          <span class="count" id="logCount2"></span>
+        </div>
+        <div id="catchChartWrap" style="display:none;margin-bottom:12px">
+          <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:4px">Catches over time — bars are fish landed per session, dots are what the model predicted</div>
+          <svg id="catchChart" width="100%" height="120" viewBox="0 0 640 120" preserveAspectRatio="none"></svg>
+        </div>
+        <div style="overflow-x:auto"><table class="logt" id="logTable">
+          <thead><tr><th>Date</th><th>Session</th><th>Result</th><th>Model said</th><th>Conditions</th><th></th></tr></thead>
+          <tbody></tbody></table></div>
+        <div class="calib" id="calib"></div>
+      </div>
+    </main>
+  </div>
+
+  <div class="rig-overlay" id="rigOverlay" role="dialog" aria-modal="true" aria-label="Rig diagram">
+    <div class="rig-box">
+      <div class="rig-head"><h3 id="rigTitle">Rig</h3><button class="rig-close" id="rigClose">Close</button></div>
+      <div id="rigSvg"></div>
+      <div class="rig-note" id="rigNote"></div>
+      <div class="rig-more"><a id="rigMore" href="#" target="_blank" rel="noopener">More photos of this rig on the web</a></div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Catch probability is a relative bite index (0 to 100), not literal odds. Evidence grades vary: the temperature gates (VFA acoustic tracking), tide-flow rules and light windows are well supported; barometric pressure is weighted toward its trend because the science suggests fish respond to the weather change itself rather than the pressure number, and pressure is ignored for species without swim bladders (gummies, squid); moon is deliberately a whisper, not a driver, because long-run catch datasets disagree about it. Recommended windows also carry a small human-comfort tiebreak (up to 3 points) built on feels-like temperature, which includes wind chill, so between two near-equal windows the kinder one wins. The index: it blends barometric pressure level and 3-hour trend, water temperature against each species' preferred band (snapper fire at 16 to 19°C in the bay), tide movement, light, season, moon, and each spot's wind and swell exposure. Pressure is weighted heavily for snapper and hardly at all for gummy sharks, which have no swim bladder. Forecast data from Open-Meteo; satellite sea temperature (NASA JPL MUR, 1 km) and chlorophyll (NASA MODIS) via NOAA CoastWatch, used in place of model water temperature when available; the tide curve is modelled sea level (allow 20 to 30 minutes against BOM tables).</p>
+    <p>Chart links open OpenSeaMap (community nautical chart) and satellite view at each mark; positions are indicative, not for navigation. Never use this page for navigation or safety. Check BOM warnings before launching, and note Marine National Park no-take boundaries near Portsea Hole and Popes Eye. Bag and size limits shown are from the VFA recreational fishing guide, current at September 2026 \u2014 rules change, so confirm at vfa.vic.gov.au before keeping fish.</p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+/* ============================ CONFIG ============================ */
+const HOME={name:"Rosebud",lat:-38.3555,lon:144.9024};
+const EMAIL_TO="gregoryerice@me.com";
+const WATER_POINTS={
+  bay:{lat:-38.31,lon:144.93,label:"Port Phillip (Rosebud)"},
+  ocean:{lat:-38.48,lon:144.88,label:"Bass Strait (Gunnamatta)"},
+  wp:{lat:-38.47,lon:145.02,label:"Western Port (Flinders)"}
+};
+const SPECIES=["snapper","whiting","flathead","salmon","gummy shark","garfish","squid"];
+
+/* Species model: season by month (Jan..Dec), temp band [min,optLo,optHi,max],
+   pressure sensitivity 0..1, tide/light behaviour, moon sensitivity */
+const SP={
+ "snapper":{season:[.7,.75,.8,.7,.6,.35,.2,.25,.5,.9,1,.95],temp:[13,16,19,21],pSens:1,
+   tide:{rising:.85,falling:.85,slack:.7,change:1},light:{dawnDusk:1,day:.7,night:.85},moon:.04},
+ "whiting":{season:[.9,1,1,.9,.7,.55,.5,.6,.7,.8,.9,.9],temp:[12,14,20,23],pSens:.6,
+   tide:{rising:1,falling:.85,slack:.35,change:.9},light:{dawnDusk:1,day:.75,night:.9},moon:.04},
+ "flathead":{season:[1,1,.9,.8,.7,.6,.6,.6,.8,.9,1,1],temp:[12,16,22,25],pSens:.6,
+   tide:{rising:.95,falling:.95,slack:.75,change:.95},light:{dawnDusk:1,day:.95,night:.6},moon:.03},
+ "salmon":{season:[.6,.5,.6,.8,1,1,1,1,.9,.7,.6,.6],temp:[10,12,17,20],pSens:.3,
+   tide:{rising:1,falling:.8,slack:.7,change:.9},light:{dawnDusk:1,day:.75,night:.5},moon:.03},
+ "gummy shark":{season:[.7,.8,1,1,1,1,1,.9,.8,.9,.8,.7],temp:[10,12,20,23],pSens:.05,
+   tide:{rising:.8,falling:.8,slack:.7,change:1},light:{dawnDusk:1,day:.45,night:1},moon:.08},
+ "garfish":{season:[.7,.7,.7,.7,.7,.7,.8,1,1,1,.9,.8],temp:[10,13,19,22],pSens:.5,
+   tide:{rising:.9,falling:.85,slack:1,change:1},light:{dawnDusk:1,day:.8,night:.7},moon:.03},
+ "squid":{season:[.8,.8,.9,1,1,1,1,1,.9,.85,.8,.8],temp:[10,13,18,21],pSens:.1,
+   tide:{rising:.95,falling:.85,slack:.9,change:1},light:{dawnDusk:1,day:.65,night:.95},moon:.05}
+};
+
+/* Playbooks: rig, bait, method (from VFA, Fishing Monthly, Hooked Up, Fishing Mad, Reedy's) */
+const PLAYBOOK={
+ "snapper":{rig:"Twin-snelled 4/0 to 6/0 suicide hooks on 1 m of 40 to 60 lb leader, small running ball sinker (or unweighted) above the swivel, lumo bead. Paternoster in current.",
+   bait:"Fresh squid (head first), silver whiting, pilchard, garfish. Fresh beats frozen every time.",
+   method:"Anchor and set a steady pilchard-and-pellet berley trail. Fish the tide change at first or last light on a rising or slowly falling barometer above about 1015 hPa. SW to W breeze with a light chop is classic snapper weather."},
+ "whiting":{rig:"Running sinker or long-dropper paternoster, size 4 to 8 long-shank or circle hooks, 4 to 6 lb main, 15 to 20 lb trace, red tubing or lumo bead above the hook.",
+   bait:"Pipis first, then bass yabbies, fresh squid strips, mussel.",
+   method:"Anchor over sand patches inside the weed in 2 to 8 m and berley lightly. They want moving water: no run, no fun. Best two hours around the change, dawn, dusk and into dark."},
+ "flathead":{rig:"1/16 to 1/4 oz jighead with a 3 inch paddle or curl-tail plastic, 20 lb leader; or a running sinker with a size 1 circle for bait.",
+   bait:"Soft plastics out-fish bait: nuclear chicken and natural baitfish colours. Otherwise squid or cut pilchard hard on the bottom.",
+   method:"Drift the sand between weed beds and hop the plastic with pauses. Any moving tide, full daylight is fine — the most forgiving target on this list."},
+ "salmon":{rig:"Surf paternoster with 1/0 to 3/0 hooks and a surf popper on the dropper, star sinker; or spin 40 to 60 g metal slugs on a 9 to 11 ft rod, 10 to 15 lb braid.",
+   bait:"Bluebait, whitebait, pilchard, pipi. Metals and 3 to 4 inch paddle-tails when schools show.",
+   method:"Read the beach at low tide and mark the gutters (darker water, gap in the break). Fish the rising tide at dawn or dusk with a northerly flattening the surf. Fast retrieve, pause under the whitewater."},
+ "gummy shark":{rig:"Running sinker (6 to 14 oz in Western Port current), 1.5 m of 60 lb mono trace, single 6/0 to 7/0 circle or snelled 5/0 plus 7/0.",
+   bait:"Fresh is everything: salmon or trevally fillet, squid head, cured eel, big prawns up the top end. Make sure it doesn't spin in the tide.",
+   method:"Anchor a channel edge through the change, berley constantly, fish baits down-current. Night around the new or full moon is prime; barometer barely matters — no swim bladder."},
+ "garfish":{rig:"Pencil float, 4 to 6 lb line, a few split shot down the trace, size 12 long-shank hook set 0.5 to 2 m under the float.",
+   bait:"Maggots, silverfish, tiny pieces of pilchard or prawn.",
+   method:"Berley is the whole game: pollard and bread with tuna oil, a little and often, and keep the bait drifting in the trail. Still, high-water evenings off the bay piers."},
+ "squid":{rig:"Size 2.5 to 3.0 jigs shallow or at slack, 3.0 to 3.5 in depth or current; soft-tipped rod, light drag, 10 lb fluorocarbon leader in the clear southern water.",
+   bait:"Natural and whiting-pattern jigs in clear water, glow or UV at night, one loud orange as the searcher.",
+   method:"Cast past sand patches in the weed, two sharp lifts then a long sink. They hate dirty water and hard current, so fish the top of the tide and the changes. Dusk into dark under pier lights is prime."}
+};
+
+/* ============================ RIG DIAGRAMS ============================ */
+const RD={ /* drawing helpers, all schematic */
+  lbl:(x,y,t,a="start")=>`<text x="${x}" y="${y}" font-size="11.5" fill="var(--ink-soft)" text-anchor="${a}">${t}</text>`,
+  dash:(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>`,
+  line:(x1,y1,x2,y2,wd=2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--ink)" stroke-width="${wd}" stroke-linecap="round"/>`,
+  hook:(x,y,s=1)=>`<circle cx="${x}" cy="${y}" r="${2.6*s}" fill="none" stroke="var(--ink)" stroke-width="1.6"/>
+    <path d="M${x},${y+2.6*s} v${26*s} c0,${13*s} ${17*s},${15*s} ${22*s},${3*s} l${-4*s},${-7*s}" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>`,
+  swivel:(x,y)=>`<ellipse cx="${x}" cy="${y-6}" rx="3.4" ry="5.5" fill="none" stroke="var(--ink)" stroke-width="1.8"/>
+    <ellipse cx="${x}" cy="${y+6}" rx="3.4" ry="5.5" fill="none" stroke="var(--ink)" stroke-width="1.8"/>`,
+  ball:(x,y,r=10)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="var(--ink-soft)"/>`,
+  bead:(x,y)=>`<circle cx="${x}" cy="${y}" r="4" fill="var(--hold)"/>`,
+  star:(x,y,r=12)=>{let p="";for(let i=0;i<10;i++){const a=(i*36-90)*Math.PI/180,rr=i%2?r*0.45:r;
+    p+=(i?"L":"M")+(x+rr*Math.cos(a)).toFixed(1)+","+(y+rr*Math.sin(a)).toFixed(1)}
+    return `<path d="${p} Z" fill="var(--ink-soft)"/>`},
+  bomb:(x,y)=>`<path d="M${x},${y-14} c9,0 11,10 11,16 c0,9 -5,14 -11,14 c-6,0 -11,-5 -11,-14 c0,-6 2,-16 11,-16 Z" fill="var(--ink-soft)"/>
+    <circle cx="${x}" cy="${y-16}" r="3.5" fill="none" stroke="var(--ink)" stroke-width="1.8"/>`
+};
+const RIGS={
+ "snapper":{title:"Snapper running-sinker rig",q:"snapper running sinker snelled rig diagram",
+  note:"The ball runs freely on the main line so a taking fish feels no weight. Go unweighted when the drift allows.",
+  svg:()=>{const x=150;let s="";
+   s+=RD.line(x,14,x,86);s+=RD.ball(x,60,10);
+   s+=RD.swivel(x,100);s+=RD.line(x,86,x,94,2);
+   s+=RD.line(x,112,x,150,2);s+=RD.bead(x,150);
+   s+=RD.line(x,154,x,168,2);s+=RD.hook(x,168,1.15);
+   s+=RD.line(x,176,x,214,2);s+=RD.hook(x,214,1.3);
+   s+=RD.dash(x+14,60,215,60);s+=RD.lbl(220,64,"Running ball sinker (small as you can)");
+   s+=RD.dash(x+8,100,215,100);s+=RD.lbl(220,104,"Rolling swivel");
+   s+=RD.dash(x+6,132,215,132);s+=RD.lbl(220,128,"1 m leader, 40 to 60 lb");s+=RD.lbl(220,142,"with lumo bead");
+   s+=RD.dash(x+26,192,215,192);s+=RD.lbl(220,188,"Twin snelled 4/0 to 6/0");s+=RD.lbl(220,202,"suicide or octopus hooks");
+   s+=RD.lbl(x,274,"Bait: whole squid head or silver whiting","middle");
+   return `<svg viewBox="0 0 462 282" xmlns="http://www.w3.org/2000/svg">${RD.lbl(150,10,"main line","middle")}${s}</svg>`}},
+ "whiting":{title:"Whiting paternoster rig",q:"king george whiting paternoster rig diagram",
+  note:"Droppers stand off the main line so pipi baits sit just above the sand patches in the weed.",
+  svg:()=>{const x=140;let s="";
+   s+=RD.line(x,14,x,238);
+   s+=RD.line(x,70,x+56,82,2);s+=RD.bead(x+56,86);s+=RD.line(x+56,90,x+56,96,2);s+=RD.hook(x+56,96,0.95);
+   s+=RD.line(x,150,x+56,162,2);s+=RD.bead(x+56,166);s+=RD.line(x+56,170,x+56,176,2);s+=RD.hook(x+56,176,0.95);
+   s+=RD.ball(x,252,11);
+   s+=RD.dash(x+80,92,235,92);s+=RD.lbl(240,88,"Dropper loops with size 4 to 8");s+=RD.lbl(240,102,"long-shank hooks, red bead or tubing");
+   s+=RD.dash(x+14,252,235,252);s+=RD.lbl(240,256,"Ball or bomb sinker to hold bottom");
+   s+=RD.lbl(x,10,"4 to 6 lb main, 15 to 20 lb trace","middle");
+   return `<svg viewBox="0 0 462 275" xmlns="http://www.w3.org/2000/svg">${s}</svg>`}},
+ "flathead":{title:"Flathead soft-plastic rig",q:"flathead soft plastic jighead rig diagram",
+  note:"Cast, let it hit bottom, two hops and a pause. Most hits come on the drop.",
+  svg:()=>{let s="";
+   s+=RD.line(190,16,120,96,1.8);
+   s+=RD.ball(116,104,11);
+   s+=`<path d="M116,104 v14 c0,11 15,13 20,3 l-4,-6" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round"/>`;
+   s+=`<path d="M127,102 c34,-8 70,-6 96,4 c8,3 8,9 0,12 c-26,10 -62,12 -96,4 Z" fill="var(--tide-soft)" stroke="var(--tide)" stroke-width="2"/>`;
+   s+=`<circle cx="236" cy="112" r="12" fill="none" stroke="var(--tide)" stroke-width="2"/>`;
+   s+=RD.dash(116,120,116,168);s+=RD.lbl(116,182,"1/16 to 1/4 oz jighead","middle");
+   s+=RD.dash(236,126,236,168);s+=RD.lbl(236,182,"3 inch paddle tail","middle");
+   s+=RD.lbl(200,12,"20 lb leader");
+   s+=`<path d="M60,236 q40,-26 80,0 q40,26 80,0 q40,-26 80,0" fill="none" stroke="var(--line)" stroke-width="2"/>`;
+   s+=RD.lbl(200,256,"hop it along the sand between the weed","middle");
+   return `<svg viewBox="0 0 462 268" xmlns="http://www.w3.org/2000/svg">${s}</svg>`}},
+ "salmon":{title:"Surf paternoster with popper",q:"australian salmon surf rig paternoster popper diagram",
+  note:"The buoyant popper lifts one bait off the sand and doubles the hook-ups when a school moves through.",
+  svg:()=>{const x=140;let s="";
+   s+=RD.line(x,14,x,230);
+   s+=RD.line(x,70,x+52,82,2);
+   s+=`<ellipse cx="${x+66}" cy="86" rx="14" ry="8" fill="var(--stop)" opacity=".85"/><ellipse cx="${x+60}" cy="86" rx="6" ry="7" fill="#fff"/>`;
+   s+=RD.line(x+80,88,x+88,92,2);s+=RD.hook(x+88,92,0.9);
+   s+=RD.line(x,150,x+52,162,2);s+=RD.hook(x+52,162,1.0);
+   s+=RD.star(x,252,14);
+   s+=RD.dash(x+94,86,245,86);s+=RD.lbl(250,82,"Surf popper on the top dropper");s+=RD.lbl(250,96,"1/0 to 3/0 hook");
+   s+=RD.dash(x+70,168,245,168);s+=RD.lbl(250,164,"Bottom dropper: bluebait");s+=RD.lbl(250,178,"or pilchard");
+   s+=RD.dash(x+16,252,245,252);s+=RD.lbl(250,256,"Star sinker holds in the wash");
+   s+=RD.lbl(x,10,"10 to 15 lb braid, long surf rod","middle");
+   return `<svg viewBox="0 0 462 275" xmlns="http://www.w3.org/2000/svg">${s}</svg>`}},
+ "gummy shark":{title:"Gummy shark running rig",q:"gummy shark running sinker rig 60lb trace diagram",
+  note:"The long heavy trace beats abrasive skin and crushing jaws; the sliding sinker keeps the bait natural in the tide.",
+  svg:()=>{const x=150;let s="";
+   s+=RD.line(x,14,x,92);
+   s+=`<path d="M${x},52 h16" stroke="var(--ink)" stroke-width="2"/>`;s+=RD.bomb(x+22,66);
+   s+=RD.swivel(x,106);s+=RD.line(x,92,x,100,2);
+   s+=RD.line(x,118,x,224,2.4);
+   s+=RD.hook(x,224,1.5);
+   s+=RD.dash(x+36,62,235,62);s+=RD.lbl(240,58,"6 to 14 oz bomb on a slider or clip");s+=RD.lbl(240,72,"(size the tide)");
+   s+=RD.dash(x+8,106,235,106);s+=RD.lbl(240,110,"Heavy swivel");
+   s+=RD.dash(x+6,170,235,170);s+=RD.lbl(240,166,"1.5 m of 60 lb mono trace");
+   s+=RD.dash(x+30,248,235,248);s+=RD.lbl(240,244,"6/0 to 7/0 circle hook,");s+=RD.lbl(240,258,"fresh fillet bait that won't spin");
+   return `<svg viewBox="0 0 462 275" xmlns="http://www.w3.org/2000/svg">${RD.lbl(150,10,"30 to 50 lb braid","middle")}${s}</svg>`}},
+ "garfish":{title:"Garfish float rig",q:"garfish pencil float rig diagram",
+  note:"Feed berley little and often and keep adjusting the depth until the float starts sliding away.",
+  svg:()=>{const x=150;let s="";
+   s+=RD.line(x,14,x,66,1.6);
+   s+=`<rect x="${x-4}" y="66" width="8" height="52" rx="4" fill="#fff" stroke="var(--ink)" stroke-width="1.8"/>`;
+   s+=`<rect x="${x-4}" y="66" width="8" height="12" rx="4" fill="var(--stop)"/>`;
+   s+=RD.line(x,118,x,236,1.6);
+   s+=RD.ball(x,150,4);s+=RD.ball(x,166,4);s+=RD.ball(x,182,4);
+   s+=RD.hook(x,236,0.8);
+   s+=RD.dash(x+10,90,235,90);s+=RD.lbl(240,94,"Pencil or quill float");
+   s+=RD.dash(x+8,166,235,166);s+=RD.lbl(240,162,"A few split shot to");s+=RD.lbl(240,176,"cock the float");
+   s+=RD.dash(x+22,252,235,252);s+=RD.lbl(240,248,"Size 12 long-shank,");s+=RD.lbl(240,262,"maggot or silverfish, 0.5 to 2 m deep");
+   return `<svg viewBox="0 0 462 275" xmlns="http://www.w3.org/2000/svg">${RD.lbl(150,10,"4 to 6 lb line","middle")}${s}</svg>`}},
+ "squid":{title:"Squid jig (egi) setup",q:"squid egi jig size 3.0 rig diagram",
+  note:"Two sharp upward rips, then let it glide down on a slack-ish line — the take almost always comes on the sink.",
+  svg:()=>{let s="";
+   s+=RD.line(70,30,140,86,1.8);
+   s+=`<path d="M140,86 c40,-16 96,-12 128,6 c-4,10 -12,16 -22,18 c-36,8 -82,4 -106,-10 c-4,-4 -4,-10 0,-14 Z" fill="var(--tide-soft)" stroke="var(--tide)" stroke-width="2"/>`;
+   s+=`<circle cx="142" cy="90" r="3.5" fill="none" stroke="var(--ink)" stroke-width="1.8"/>`;
+   for(let i=0;i<5;i++){const a=(200+i*28)*Math.PI/180;
+     s+=`<line x1="268" y1="102" x2="${268+16*Math.cos(a)}" y2="${102+16*Math.sin(a)}" stroke="var(--ink)" stroke-width="1.8"/>`;
+     s+=`<line x1="258" y1="108" x2="${258+13*Math.cos(a)}" y2="${108+13*Math.sin(a)}" stroke="var(--ink)" stroke-width="1.6"/>`}
+   s+=`<line x1="150" y1="96" x2="250" y2="104" stroke="var(--tide)" stroke-width="1" stroke-dasharray="2 3"/>`;
+   s+=RD.dash(142,96,142,150);s+=RD.lbl(120,164,"Line tie: 10 lb fluorocarbon","middle");
+   s+=RD.dash(268,120,268,180);s+=RD.lbl(268,194,"Barbless crown (no strike, just lift)","middle");
+   s+=`<path d="M90,200 l60,44" stroke="var(--ink-soft)" stroke-width="2" marker-end="none"/><path d="M150,244 l-10,-3 l4,-9 Z" fill="var(--ink-soft)"/>`;
+   s+=RD.lbl(160,236,"Size 2.5 to 3.5 \u2014 a good jig sinks");s+=RD.lbl(160,250,"nose-down at about 45 degrees");
+   return `<svg viewBox="0 0 462 268" xmlns="http://www.w3.org/2000/svg">${s}</svg>`}}
+};
+function openRig(sp){
+  const r=RIGS[sp];if(!r)return;
+  $("#rigTitle").textContent=r.title;
+  $("#rigSvg").innerHTML=r.svg();
+  $("#rigNote").textContent=r.note;
+  $("#rigMore").href="https://www.google.com/search?tbm=isch&q="+encodeURIComponent(r.q);
+  $("#rigOverlay").classList.add("open");
+  $("#rigClose").focus();
+}
+function closeRig(){$("#rigOverlay").classList.remove("open")}
+
+/* Victorian bag and size limits (VFA recreational fishing guide, current at Sept 2026) */
+const LIMITS={
+ "snapper":{size:"28 cm minimum",bag:"10, of which no more than 3 fish may be 40 cm or over",
+   note:"Must be kept whole or in carcass form on the water \u2014 no filleting until you're away (boat-ramp cleaning tables are fine)."},
+ "whiting":{size:"27 cm minimum",bag:"20 (King George whiting)",
+   note:"Other whiting species: no minimum size, combined bag of 20."},
+ "flathead":{size:"27 cm minimum",bag:"20 combined, all species except dusky",
+   note:"Dusky flathead (Gippsland waters): 30 to 55 cm slot, bag of 5, no filleting on the water."},
+ "salmon":{size:"21 cm minimum",bag:"20 combined with Australian herring",
+   note:"Herring look like juvenile salmon and share the combined bag \u2014 count them together."},
+ "gummy shark":{size:"45 cm partial length minimum",bag:"2 combined gummy and/or school shark",
+   note:"Partial length is measured from the fifth gill slit to the base of the tail."},
+ "garfish":{size:"No minimum",bag:"40 combined, all garfish species",note:""},
+ "squid":{size:"No minimum",bag:"10 combined squid, calamari, octopus and cuttlefish",
+   note:"Marine National Parks and Sanctuaries are no-take \u2014 check boundaries near Popes Eye and Portsea Hole."}
+};
+
+const SPOTS=[
+ {id:"rosebud-pier",name:"Rosebud Pier",mode:"land",water:"bay",lat:-38.3496,lon:144.9066,offshoreDeg:180,arc:75,exposure:"sheltered",
+  species:["squid","whiting","garfish","flathead","salmon"],tidePref:"run",drive:2,
+  notes:"Shallow — best late run-in and into the evening. Squid under the lights, gars on the float with berley."},
+ {id:"rye-pier",name:"Rye Pier",mode:"land",water:"bay",lat:-38.3675,lon:144.8205,offshoreDeg:180,arc:75,exposure:"sheltered",
+  species:["squid","whiting","garfish","salmon","flathead"],tidePref:"run",drive:8,
+  notes:"The bay's squid capital, shallow reef both sides. Fish the deeper seaward end; whiting off the sand edges after dark."},
+ {id:"blairgowrie-pier",name:"Blairgowrie Pier",mode:"land",water:"bay",lat:-38.3585,lon:144.7772,offshoreDeg:190,arc:70,exposure:"sheltered",
+  species:["squid","whiting","garfish"],tidePref:"high",drive:12,
+  notes:"Rocky and snag-prone — work 2.5 to 3.0 jigs slowly. Strong low-light squid option; keep clear of the marina."},
+ {id:"sorrento-pier",name:"Sorrento Pier",mode:"land",water:"bay",lat:-38.3382,lon:144.7415,offshoreDeg:200,arc:70,exposure:"open",
+  species:["squid","garfish","whiting","salmon"],tidePref:"run",drive:18,
+  notes:"Deep-water access for bigger squid and whiting. More current than the eastern piers — fish around the change."},
+ {id:"anthonys-nose",name:"Anthony's Nose, Dromana",mode:"land",water:"bay",lat:-38.346,lon:144.974,offshoreDeg:160,arc:70,exposure:"open",
+  species:["snapper","squid","flathead"],tidePref:"change",drive:10,
+  notes:"Deep water close to shore under Arthurs Seat — the peninsula's classic land-based snapper spot. Dawn change in a light southerly is prime."},
+ {id:"gunnamatta",name:"Gunnamatta Beach",mode:"land",water:"ocean",lat:-38.451,lon:144.885,offshoreDeg:0,arc:60,exposure:"surf",
+  species:["salmon","gummy shark","flathead"],tidePref:"run",drive:15,
+  notes:"Needs a northerly to lie down. Mark the gutters at low, fish the push; the far eastern end holds schools. Gummies after dark. Serious surf — never wade deep."},
+ {id:"st-andrews",name:"St Andrews Beach",mode:"land",water:"ocean",lat:-38.424,lon:144.826,offshoreDeg:350,arc:60,exposure:"surf",
+  species:["salmon","gummy shark"],tidePref:"run",drive:13,
+  notes:"Quieter sister to Gunnamatta, same rules: offshore wind, rising tide into dusk, read the gutters."},
+ {id:"flinders-pier",name:"Flinders Pier",mode:"land",water:"wp",lat:-38.4775,lon:145.022,offshoreDeg:210,arc:70,exposure:"open",
+  species:["squid","whiting","garfish","salmon"],tidePref:"high",drive:30,
+  notes:"Famous squid water over the weed. Watch for the resident weedy seadragons — give divers plenty of room."},
+
+ {id:"grass-beds",name:"Rosebud to Rye grass beds",mode:"boat",water:"bay",lat:-38.345,lon:144.86,offshoreDeg:180,arc:80,exposure:"inshore",maxWind:16,
+  species:["whiting","squid","garfish","flathead"],tidePref:"run",drive:5,
+  notes:"3 to 7 m over broken weed and sand. Drift for squid first, then anchor and berley the whiting on the run-in."},
+ {id:"dromana-grounds",name:"Dromana to Mt Martha snapper grounds",mode:"boat",water:"bay",lat:-38.31,lon:144.98,offshoreDeg:170,arc:80,exposure:"open",maxWind:16,
+  species:["snapper","flathead","squid"],tidePref:"change",drive:12,
+  notes:"Consistent 18 to 22 m marks — sound for bait schools. Berley across a dawn or dusk change; inshore reef in 4 to 7 m fires on warm afternoons after a cold spell."},
+ {id:"south-channel",name:"South Channel edge, off Portsea",mode:"boat",water:"bay",lat:-38.305,lon:144.72,offshoreDeg:200,arc:70,exposure:"open",maxWind:13,
+  species:["snapper","flathead","gummy shark"],tidePref:"slack",drive:22,
+  notes:"Deep water and serious current — only fishable at slack. Portsea Hole itself sits inside the Marine National Park no-take boundary, so anchor the channel edges outside it. Watch shipping."},
+ {id:"chinamans",name:"Quarantine to Chinaman's Hat",mode:"boat",water:"bay",lat:-38.286,lon:144.69,offshoreDeg:200,arc:70,exposure:"open",maxWind:14,
+  species:["squid","salmon","snapper"],tidePref:"change",drive:20,
+  notes:"Clean southern-end water: big squid over the weed, salmon on the surface. Popes Eye is a no-take marine park — stay outside the markers."},
+ {id:"middle-spit",name:"Western Port, Middle Spit",mode:"boat",water:"wp",lat:-38.34,lon:145.24,offshoreDeg:20,arc:90,exposure:"channel",maxWind:15,
+  species:["gummy shark","whiting","snapper","flathead"],tidePref:"change",drive:40,
+  notes:"Launch Stony Point or Hastings. Huge tides — fish the hour each side of the change or you'll need a kilo of lead. Gummies love the night change."},
+ {id:"balnarring",name:"Balnarring to Somers banks",mode:"boat",water:"wp",lat:-38.405,lon:145.13,offshoreDeg:350,arc:80,exposure:"inshore",maxWind:14,
+  species:["whiting","gummy shark","squid"],tidePref:"run",drive:32,
+  notes:"Whiting on the bank edges on the making tide, squid over the weed on top. Northerlies give a lee off the beach."}
+];
+
+/* GPS marks inside each ground (indicative fishing marks, not navigation) */
+const MARKS={
+ "grass-beds":[{n:"Rosebud sand holes, 4 to 6 m",lat:-38.342,lon:144.876},{n:"Rye weed edge, 6 m",lat:-38.3565,lon:144.834}],
+ "dromana-grounds":[{n:"Dromana 16 m line",lat:-38.3185,lon:144.943},{n:"Mt Martha 20 m line",lat:-38.286,lon:144.995}],
+ "south-channel":[{n:"Channel edge east of the Hole",lat:-38.3055,lon:144.729}],
+ "chinamans":[{n:"Chinaman's Hat weed line",lat:-38.2865,lon:144.69},{n:"Quarantine drop-off",lat:-38.306,lon:144.67}],
+ "middle-spit":[{n:"Middle Spit north drop",lat:-38.33,lon:145.245},{n:"Spit eastern edge",lat:-38.348,lon:145.256}],
+ "balnarring":[{n:"Balnarring bank edge, 5 m",lat:-38.403,lon:145.129},{n:"Somers weed line",lat:-38.397,lon:145.162}],
+ "gunnamatta":[{n:"Eastern-end gutters",lat:-38.447,lon:144.893},{n:"Carpark gutter",lat:-38.452,lon:144.8845}],
+ "st-andrews":[{n:"Main access gutter",lat:-38.4245,lon:144.8265}]
+};
+/* Tidal stream axis: compass direction the flood tide flows TOWARD, per water */
+const FLOW_TO={wp:20,bay:350,ocean:null};
+
+/* Reefs, artificial reefs and structure where fish congregate.
+   VFA-published positions where available; 'approx' marks are indicative — sound around. */
+const STRUCTURE=[
+ {n:"Rhys Reef (Aspendale reef balls)",kind:"artificial",lat:-38.0361,lon:145.0772,depth:"11 m",
+  sp:"snapper, flathead, squid",note:"VFA concrete pallet-ball cluster, about 2 km offshore. Renamed for Rhys Gillard. Worth a drift on the way to deeper marks."},
+ {n:"Tedesco Reef (Seaford reef balls)",kind:"artificial",lat:-38.0874,lon:145.0992,depth:"11 m",
+  sp:"snapper, flathead, squid",note:"VFA reef-ball cluster off Seaford, four ball groups roughly 30 m apart."},
+ {n:"Yakka Reef (Frankston reef balls)",kind:"artificial",lat:-38.1414,lon:145.0913,depth:"11 m",
+  sp:"snapper, flathead, squid, trevally",note:"VFA reef-ball cluster off Frankston. Fish the edges rather than on top."},
+ {n:"Frankston Pier shore reef",kind:"artificial",lat:-38.1436,lon:145.1168,depth:"3 to 4.5 m",
+  sp:"snapper, flathead, leatherjacket, salmon, trevally, squid",note:"VFA modules about 40 m seaward of the pier — reachable with a long cast from the deck."},
+ {n:"Portsea kingfish reef",kind:"artificial",lat:-38.2992,lon:144.6773,depth:"28 m",
+  sp:"kingfish, snapper, squid",note:"16 VFA modules in four clusters, 800 m NNE of Observatory Point. Summer kings; jig or live-bait the structure. Watch shipping."},
+ {n:"Dromana shellfish reef",kind:"shellfish",lat:-38.323,lon:144.956,depth:"8 to 12 m",approx:true,
+  sp:"snapper, flathead, whiting on the edges",note:"Restored mussel and oyster reef off Dromana — a growing bait larder that draws early-season reds. Position approximate: sound around."},
+ {n:"Popes Eye annulus",kind:"notake",lat:-38.2765,lon:144.6983,depth:"structure to 12 m",
+  sp:"NO-TAKE marine park",note:"Spectacular fish life but fishing is prohibited inside the markers. Shown so you don't drift in — fish outside the boundary only."},
+ {n:"Chinaman's Hat",kind:"natural",lat:-38.2847,lon:144.6617,depth:"8 to 14 m",approx:true,
+  sp:"squid, kingfish, salmon",note:"Seal structure and surrounding weed and reef. Give the seals room; work the broken ground around it."},
+ {n:"Mt Martha rocks",kind:"natural",lat:-38.279,lon:145.009,depth:"3 to 8 m",approx:true,
+  sp:"snapper, squid, salmon",note:"Inshore granite and reef off the point — warm-afternoon pinkie water and big spring squid."},
+ {n:"Crawfish Rock (Western Port)",kind:"natural",lat:-38.351,lon:145.287,depth:"rises from 15 m",approx:true,
+  sp:"snapper, gummy shark, big whiting",note:"Famous North Arm pinnacle — current-swept, fish the slack and the pressure edges. Position approximate: sound it up."},
+ {n:"Rosebud Reef",kind:"natural",lat:-38.3457,lon:144.8888,depth:"4 m",
+  sp:"whiting, squid, pinkies, garfish",note:"Low limestone reef about 1 km off Rosebud, running 250 m north-west and standing 2 to 3 m off the sand. Berley the sand edges for whiting; squid over the top. Your closest reef to home."},
+ {n:"Hurricane Wreck",kind:"wreck",lat:-38.3409,lon:144.8718,depth:"12 m",
+  sp:"pinkies, snapper, flathead",note:"70 m iron ship, sunk 1869 after striking Corsair Rock. Fires on the evening tide change. Protected historic wreck — fish beside it, never anchor into the structure."},
+ {n:"South Channel Pile Light",kind:"artificial",lat:-38.305,lon:144.7567,depth:"about 8 m",
+  sp:"pinkies, squid, flathead",note:"The 1874 timber pile light, relocated 3 km off Rye. The piles and surrounding rubble hold fish; drift the edges."},
+ {n:"South Channel Fort",kind:"artificial",lat:-38.305,lon:144.8,depth:"6 to 10 m around",
+  sp:"flathead, pinkies, squid",note:"Island fort on the Great Sands — drift the surrounding drop-offs for flathead. Fish the water, not the island."},
+ {n:"Hovell Pile",kind:"artificial",lat:-38.283,lon:144.928,depth:"14 to 18 m nearby",approx:true,
+  sp:"snapper, gummy shark",note:"Classic Rosebud snapper reference mark — the reports always read \u2018behind the Hovell Pile\u2019 in 15 to 18 m. Position approximate: confirm against the chart symbols on this map."}
+];
+
+/* Boat ramps in routine use, with live ramp and carpark cameras */
+const RAMPS=[
+ {n:"Rye boat ramp",lat:-38.37,lon:144.818,water:"bay",
+  cam:"https://www.boating.vic.gov.au/",camLbl:"Free ramp camera (Boating Vic)",
+  note:"Beside the pier off Point Nepean Rd. Free launching. Gets busy early on good snapper mornings — check the camera before towing down."},
+ {n:"Sorrento boat ramp",lat:-38.3395,lon:144.746,water:"bay",
+  cam:"https://www.boating.vic.gov.au/ramps/a157F000001P6VXQA0",camLbl:"Free ramp camera (Boating Vic)",
+  note:"St Aubins Way, near the ferry. Closest launch to the southern grounds, Portsea kingfish reef and the Heads squid water."},
+ {n:"Mornington boat ramp (Schnapper Point)",lat:-38.214,lon:145.035,water:"bay",
+  cam:"https://www.boating.vic.gov.au/",camLbl:"Free ramp camera (Boating Vic)",
+  note:"Free launching in the harbour. Best access to the Mt Martha snapper lines and the reef-ball reefs up the coast."},
+ {n:"Hastings boat ramp",lat:-38.304,lon:145.192,water:"wp",
+  cam:"https://www.boating.vic.gov.au/",camLbl:"Free ramp camera (Boating Vic)",
+  note:"Western Port launch for Middle Spit and the North Arm. Time your run with the tide — the flats get skinny at low water."}
+];
+/* All four also stream to the free Boating Vic app (images refresh every 5 minutes). */
+
+/* Metre depth labels at every mark where the depth is known */
+const DEPTH_LABELS=[
+ {lat:-38.342,lon:144.876,d:"5"},{lat:-38.3565,lon:144.834,d:"6"},
+ {lat:-38.3185,lon:144.943,d:"16"},{lat:-38.286,lon:144.995,d:"20"},
+ {lat:-38.3055,lon:144.729,d:"22"},{lat:-38.2865,lon:144.69,d:"10"},
+ {lat:-38.33,lon:145.245,d:"12"},{lat:-38.403,lon:145.129,d:"5"},
+ {lat:-38.0361,lon:145.0772,d:"11"},{lat:-38.0874,lon:145.0992,d:"11"},
+ {lat:-38.1414,lon:145.0913,d:"11"},{lat:-38.1436,lon:145.1168,d:"4"},
+ {lat:-38.2992,lon:144.6773,d:"28"},{lat:-38.323,lon:144.956,d:"10"},
+ {lat:-38.3457,lon:144.8888,d:"4"},{lat:-38.3409,lon:144.8718,d:"12"},
+ {lat:-38.351,lon:145.287,d:"15"},{lat:-38.279,lon:145.009,d:"5"}
+];
+
+/* ============================ STATE ============================ */
+let weather=null,marine={},nowIdx=0,activeWater="bay";
+let filterMode="all",filterSpecies=new Set();
+let lastLoad=null,isSample=false,selDay=0;
+let satData={sst:{},chl:null};
+let learned={ready:false};
+
+/* ============================ HELPERS ============================ */
+const $=s=>document.querySelector(s);
+const COMPASS16=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+const dirName=d=>COMPASS16[Math.round(((d%360)+360)%360/22.5)%16];
+const angDiff=(a,b)=>{let d=Math.abs(a-b)%360;return d>180?360-d:d};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmtTime=iso=>{const d=new Date(iso);let h=d.getHours(),m=d.getMinutes(),ap=h>=12?"pm":"am";h=h%12||12;return h+":"+String(m).padStart(2,"0")+ap};
+const fmtDay=iso=>new Date(iso).toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short"});
+const cls3=(v,hi,lo)=>v>=hi?"go":(v>=lo?"hold":"stop");
+const scoreClass=s=>cls3(s,72,48);
+const probClass=p=>cls3(p,60,40);
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const chartLink=(lat,lon)=>`https://map.openseamap.org/?zoom=15&lat=${lat}&lon=${lon}`;
+const satLink=(lat,lon)=>`https://www.google.com/maps/@${lat},${lon},2500m/data=!3m1!1e3`;
+
+function moonPhase(d){const syn=29.53058867,ref=Date.UTC(2000,0,6,18,14);
+  const days=(d.getTime()-ref)/864e5;return((days%syn)+syn)%syn/syn}
+function moonFactor(sp,d){const p=moonPhase(d);
+  const dist=Math.min(Math.abs(p-0),Math.abs(p-0.5),Math.abs(p-1));
+  const near=1-clamp(dist/0.25,0,1); /* 1 at new or full */
+  return 1-SP[sp].moon+2*SP[sp].moon*near}
+function moonName(d){const p=moonPhase(d);
+  if(p<.03||p>.97)return"new moon";if(Math.abs(p-.5)<.03)return"full moon";
+  if(p<.25)return"waxing crescent";if(p<.5)return"waxing gibbous";
+  if(p<.75)return"waning gibbous";return"waning crescent"}
+
+/* ============================ DATA ============================ */
+async function loadAll(){
+  setStatus("wait","Loading conditions");
+  try{
+    const wURL=`https://api.open-meteo.com/v1/forecast?latitude=${HOME.lat}&longitude=${HOME.lon}`+
+      `&hourly=temperature_2m,apparent_temperature,precipitation_probability,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl`+
+      `&daily=sunrise,sunset,weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant&wind_speed_unit=kn&timezone=Australia%2FMelbourne&forecast_days=7&past_days=2`;
+    const mURL=k=>`https://marine-api.open-meteo.com/v1/marine?latitude=${WATER_POINTS[k].lat}&longitude=${WATER_POINTS[k].lon}`+
+      `&hourly=wave_height,sea_level_height_msl,sea_surface_temperature&timezone=Australia%2FMelbourne&forecast_days=7&past_days=2`;
+    const [w,mb,mo,mw]=await Promise.all([
+      fetch(wURL).then(r=>{if(!r.ok)throw 0;return r.json()}),
+      fetch(mURL("bay")).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch(mURL("ocean")).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch(mURL("wp")).then(r=>r.ok?r.json():null).catch(()=>null)
+    ]);
+    weather=w;marine={bay:mb,ocean:mo,wp:mw};
+    nowIdx=findNowIdx(w.hourly.time);
+    lastLoad=Date.now();isSample=false;
+    fetchSatellite();
+    setStatus("live","Live");
+    $("#banner").classList.remove("show");
+    renderAll();
+  }catch(e){
+    setStatus("err","Live data unavailable");
+    $("#banner").classList.add("show");
+  }
+}
+function findNowIdx(times){const now=Date.now();let best=0,bd=Infinity;
+  times.forEach((t,i)=>{const d=Math.abs(new Date(t).getTime()-now);if(d<bd){bd=d;best=i}});return best}
+function setStatus(kind,txt){
+  const dot=$("#statusDot");dot.className="status-dot"+(kind==="live"?" live":kind==="err"?" err":"");
+  $("#statusTxt").textContent=txt;
+  refreshStamp()}
+function refreshStamp(){
+  if(!lastLoad){$("#stampTxt").textContent="";return}
+  const m=Math.round((Date.now()-lastLoad)/6e4);
+  $("#stampTxt").textContent=m<1?"Updated just now":"Updated "+m+" min ago";
+}
+setInterval(refreshStamp,60000);
+/* keep a long-open tab fresh: re-pull live data every 30 minutes */
+setInterval(()=>{if(!isSample)loadAll()},30*60*1000);
+
+function loadSample(){
+  const start=new Date();start.setMinutes(0,0,0);start.setHours(start.getHours()-12);
+  const times=[],spd=[],dir=[],gust=[],temp=[],app=[],cld=[],pp=[],pres=[];
+  for(let i=0;i<180;i++){
+    const t=new Date(start.getTime()+i*3600e3);times.push(t.toISOString().slice(0,16));
+    const daily=Math.sin((i-8)/24*2*Math.PI);
+    spd.push(+(9+4*daily+3*Math.sin(i/40)).toFixed(1));
+    dir.push(Math.round((190+30*Math.sin(i/30)+360)%360));
+    gust.push(+(spd[i]*1.5).toFixed(1));
+    temp.push(+(13+5*Math.sin((i-14)/24*2*Math.PI)).toFixed(1));
+    app.push(+(temp[i]-spd[i]*0.45).toFixed(1));
+    cld.push([15,30,90,70,10,40,95,25][Math.floor(i/24)%8]+Math.round(10*Math.sin(i/5)));
+    pp.push(i%50<6?55:10);
+    pres.push(+(1016-3*Math.sin(i/38)-i*0.02).toFixed(1));
+  }
+  const sr=[],ss=[],days=[],wc=[],tmax=[],tmin=[],amax=[],amin=[],ppx=[],psum=[],wmx=[],wdd=[];
+  for(let d=0;d<8;d++){const dt=new Date(start.getTime()+d*864e5);days.push(dt.toISOString().slice(0,10));
+    sr.push(days[d]+"T06:25");ss.push(days[d]+"T18:07");
+    wc.push([1,2,61,3,0,2,80,1][d]);tmax.push(15+d%3*2);tmin.push(8+d%3);
+    amax.push(tmax[d]-3);amin.push(tmin[d]-4);
+    ppx.push([10,20,70,30,5,15,55,10][d]);psum.push([0,1,12,4,0,0,9,0][d]);wmx.push(10+(d%4)*4);wdd.push((180+d*25)%360)}
+  weather={hourly:{time:times,wind_speed_10m:spd,wind_direction_10m:dir,wind_gusts_10m:gust,
+    temperature_2m:temp,apparent_temperature:app,cloud_cover:cld,precipitation_probability:pp,pressure_msl:pres},
+    daily:{time:days,sunrise:sr,sunset:ss,weather_code:wc,temperature_2m_max:tmax,temperature_2m_min:tmin,
+      apparent_temperature_max:amax,apparent_temperature_min:amin,
+      precipitation_probability_max:ppx,precipitation_sum:psum,wind_speed_10m_max:wmx,wind_direction_10m_dominant:wdd}};
+  marine={};
+  for(const k of Object.keys(WATER_POINTS)){
+    const lag=k==="wp"?2.5:(k==="ocean"?0:3);
+    const amp=k==="wp"?1.3:(k==="ocean"?0.7:0.45);
+    const sl=times.map((_,i)=>+(amp*Math.sin((i-lag)/12.4*2*Math.PI)).toFixed(2));
+    const wv=times.map((_,i)=>+((k==="ocean"?1.6:0.4)+0.3*Math.sin(i/20)).toFixed(2));
+    const sst=times.map(()=>k==="wp"?13.4:14.6);
+    marine[k]={hourly:{time:times,sea_level_height_msl:sl,wave_height:wv,sea_surface_temperature:sst}};
+  }
+  nowIdx=findNowIdx(times);
+  lastLoad=Date.now();isSample=true;
+  satData={sst:{},chl:null};
+  setStatus("wait","Sample day (not live)");
+  renderAll();
+}
+
+/* ============================ TIDE ============================ */
+function tideSeries(w){const m=marine[w];
+  return m&&m.hourly&&m.hourly.sea_level_height_msl?{times:m.hourly.time,h:m.hourly.sea_level_height_msl}:null}
+function tideEvents(w,fromIdx,count){
+  const s=tideSeries(w);if(!s)return[];
+  const ev=[];
+  for(let i=Math.max(1,fromIdx-1);i<s.h.length-1&&ev.length<count;i++){
+    if(s.h[i]>=s.h[i-1]&&s.h[i]>s.h[i+1])ev.push({type:"High",t:s.times[i],h:s.h[i],idx:i});
+    else if(s.h[i]<=s.h[i-1]&&s.h[i]<s.h[i+1])ev.push({type:"Low",t:s.times[i],h:s.h[i],idx:i});
+  }return ev}
+function tideState(w,idx){
+  const s=tideSeries(w);if(!s||idx<1||idx>=s.h.length)return{state:"unknown",rate:0,nearChange:false};
+  const rate=(s.h[Math.min(idx+1,s.h.length-1)]-s.h[idx-1])/2;
+  const state=Math.abs(rate)<0.05?"slack":(rate>0?"rising":"falling");
+  /* near a turn if an extreme sits within 1.2 h */
+  let nearChange=false;
+  for(let i=Math.max(1,idx-1);i<=Math.min(s.h.length-2,idx+1);i++){
+    if((s.h[i]>=s.h[i-1]&&s.h[i]>s.h[i+1])||(s.h[i]<=s.h[i-1]&&s.h[i]<s.h[i+1]))nearChange=true;
+  }
+  return{state,rate,nearChange}
+}
+/* Near the Heads the turn lags the bay: diver-documented offsets
+   (Portsea Hole about +30 min, Popes Eye water about +45 min). */
+const SLACK_LAG={"south-channel":30,"chinamans":45};
+function tideStateFor(spot,idx){
+  const lag=SLACK_LAG[spot.id]||0;
+  const sh=Math.round(lag/90); /* 45+ min rounds to 1 h at hourly resolution */
+  return tideState(spot.water,Math.max(1,idx-sh));
+}
+/* Current strength: tide rate of change against this water's biggest flow in the window */
+let _csCache={};
+function currentStrength(water,idx){
+  const st=tideState(water,idx);
+  const r=Math.abs(st.rate);
+  let maxR=_csCache[water];
+  if(maxR===undefined){
+    maxR=0;const s0=tideSeries(water);
+    if(s0)for(let i=1;i<s0.h.length-1;i++)maxR=Math.max(maxR,Math.abs((s0.h[i+1]-s0.h[i-1])/2));
+    _csCache[water]=maxR;
+  }
+  const n=maxR?clamp(r/maxR,0,1):0;
+  const label=n<0.18?"near slack":n<0.45?"easing":n<0.78?"running":"running hard";
+  return{rate:r,n,label};
+}
+
+/* Spring vs neap: current tidal range against the fortnight's biggest */
+let _trCache={};
+function tidalRange(water){
+  if(_trCache[water])return _trCache[water];
+  const s0=tideSeries(water);
+  if(!s0){return _trCache[water]={s:0.5,label:"mid-cycle tides",cls:"mid"}}
+  const evs=tideEvents(water,Math.max(1,nowIdx-60),16);
+  if(evs.length<3){return _trCache[water]={s:0.5,label:"mid-cycle tides",cls:"mid"}}
+  const ranges=[];
+  for(let i=1;i<evs.length;i++)ranges.push({mid:(evs[i-1].idx+evs[i].idx)/2,r:Math.abs(evs[i].h-evs[i-1].h)});
+  let cur=ranges[0].r,bd=1e9;
+  for(const x of ranges){const d=Math.abs(x.mid-nowIdx);if(d<bd){bd=d;cur=x.r}}
+  const maxR=Math.max(...ranges.map(x=>x.r));
+  const sp=maxR?clamp(cur/maxR,0,1):0.5;
+  const out=sp>=0.75?{s:sp,label:"spring tide \u00B7 big flows",cls:"spring"}:
+    sp<=0.45?{s:sp,label:"neap tide \u00B7 gentle flows",cls:"neap"}:
+    {s:sp,label:"mid-cycle tides",cls:"mid"};
+  return _trCache[water]=out;
+}
+
+/* ============================ PRESSURE ============================ */
+function pressureAt(idx){const p=weather.hourly.pressure_msl;return p?p[idx]:null}
+function pressureTrend3(idx){const p=weather.hourly.pressure_msl;if(!p)return 0;
+  const a=p[Math.max(0,idx-3)],b=p[idx];return +(b-a).toFixed(1)}
+function pressureLevelScore(hPa){
+  if(hPa==null)return .8;
+  if(hPa<=1005)return .35;
+  if(hPa<1010)return .35+(hPa-1005)/5*.35;
+  if(hPa<1015)return .7+(hPa-1010)/5*.3;
+  if(hPa<=1020)return 1;
+  if(hPa<=1026)return 1-(hPa-1020)/6*.15;
+  if(hPa<=1030)return .85-(hPa-1026)/4*.15;
+  return .6}
+function pressureTrendScore(t3){
+  if(t3<=-4.5)return .9;          /* pre-storm frenzy, short-lived */
+  if(t3<=-0.5)return 1;           /* slow fall: the feed window */
+  if(t3<0.5)return .85;           /* stable */
+  if(t3<=3)return .55;            /* rising: post-front adjustment */
+  return .3}                      /* sharp rise: lockjaw */
+function pressureText(hPa,t3){
+  const dir=t3<=-0.5?"falling":(t3<0.5?"steady":"rising");
+  let v;
+  if(t3<=-4.5)v="Plummeting — expect a short, intense pre-front feed, then it shuts down.";
+  else if(t3<=-0.5)v="Slow fall — the classic feed window. Fish it.";
+  else if(t3<0.5)v=hPa>=1015?"Steady and high — reliable, settled bite.":"Steady — workable.";
+  else if(t3<=3)v="Rising after a change — fish adjust, expect a slower bite for a day.";
+  else v="Sharp rise — post-front lockjaw, the toughest 24 to 48 hours.";
+  return{dir,verdict:v}}
+
+/* ============================ WEATHER ACCESS ============================ */
+function windAt(idx){const h=weather.hourly;
+  return{spd:h.wind_speed_10m[idx],dir:h.wind_direction_10m[idx],gust:h.wind_gusts_10m[idx],
+    rain:h.precipitation_probability[idx],temp:h.temperature_2m[idx]}}
+function waveAt(w,idx){const m=marine[w];
+  return m&&m.hourly&&m.hourly.wave_height?m.hourly.wave_height[idx]:null}
+/* Average wave height for a water across the loaded forecast, cached per load */
+let _awCache={};
+function avgWave(w){
+  if(_awCache[w]!==undefined)return _awCache[w];
+  const m=marine[w];
+  if(!m||!m.hourly||!m.hourly.wave_height)return _awCache[w]=null;
+  const a=m.hourly.wave_height.filter(v=>v!=null);
+  return _awCache[w]=a.length?a.reduce((s2,v)=>s2+v,0)/a.length:null;
+}
+/* Satellite point values: MUR SST (1 km, gap-filled, daily) and MODIS chlorophyll (8-day).
+   Best-effort: if the browser can't reach ERDDAP, the model quietly falls back to model SST. */
+async function fetchSatellite(){
+  const pt=async(url)=>{const r=await fetch(url);if(!r.ok)throw 0;const j=await r.json();
+    const rows=j.table&&j.table.rows;const v=rows&&rows[0]&&rows[0][rows[0].length-1];
+    return (v==null||isNaN(v))?null:+v};
+  const mur=(lat,lon)=>`https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst%5B(last)%5D%5B(${lat})%5D%5B(${lon})%5D`;
+  try{
+    const[b,o,c]=await Promise.all([
+      pt(mur(WATER_POINTS.bay.lat,WATER_POINTS.bay.lon)).catch(()=>null),
+      pt(mur(WATER_POINTS.ocean.lat,WATER_POINTS.ocean.lon)).catch(()=>null),
+      pt(`https://coastwatch.pfeg.noaa.gov/erddap/griddap/erdMH1chla8day.json?chlorophyll%5B(last)%5D%5B(${WATER_POINTS.bay.lat})%5D%5B(${WATER_POINTS.bay.lon})%5D`).catch(()=>null)
+    ]);
+    satData={sst:{bay:b,ocean:o},chl:c};
+    if(b!=null||o!=null||c!=null)renderSea();
+  }catch(e){/* stay on model data */}
+}
+function chlWord(c){return c<0.3?"clear, low bait":c<=1?"moderate bait":"rich (or stirred up)"}
+
+/* Human comfort: apparent temperature (includes wind chill) plus rain */
+function comfortAt(idx){
+  const h=weather.hourly;
+  const feels=h.apparent_temperature?h.apparent_temperature[idx]:h.temperature_2m[idx];
+  const rain=h.precipitation_probability[idx];
+  let label,score;
+  if(feels<3){label="bitter";score=0.3}
+  else if(feels<8){label="very cold";score=0.5}
+  else if(feels<12){label="cold";score=0.65}
+  else if(feels<16){label="cool";score=0.85}
+  else if(feels<23){label="pleasant";score=1}
+  else if(feels<28){label="warm";score=0.9}
+  else{label="hot";score=0.7}
+  if(rain>=60){label+=", wet";score=Math.max(0.2,score-0.2)}
+  const cls=score>=0.85?"go":score>=0.6?"hold":"stop";
+  return{feels,label,score,cls};
+}
+function comfortChip(idx){
+  const c=comfortAt(idx);
+  return `<span class="badge ${c.cls}">feels ${Math.round(c.feels)}° · ${c.label}</span>`;
+}
+function sstAt(w,idx){
+  if(satData.sst[w]!=null)return satData.sst[w]; /* satellite observation beats model */
+  const m=marine[w];
+  return m&&m.hourly&&m.hourly.sea_surface_temperature?m.hourly.sea_surface_temperature[idx]:null}
+/* Rain over the past 48 h: runoff dirties the inshore water */
+function recentRain(){
+  const d=weather.daily;
+  if(!d||!d.precipitation_sum)return null;
+  const today=weather.hourly.time[nowIdx].slice(0,10);
+  let mm=0,found=false;
+  d.time.forEach((t,i)=>{if(t<today&&d.precipitation_sum[i]!=null){mm+=d.precipitation_sum[i];found=true}});
+  return found?mm:null;
+}
+function rainWord(mm){return mm<8?"little runoff":mm<20?"some runoff \u2014 edges may be murky":"heavy runoff \u2014 inshore water dirty"}
+function cloudAt(idx){
+  const c=weather.hourly.cloud_cover;
+  return c&&c[idx]!=null?c[idx]:null}
+function lightFactor(sp,iso,idx){
+  const d=new Date(iso),day=iso.slice(0,10);
+  const di=weather.daily.time.indexOf(day);
+  if(di<0)return SP[sp].light.day;
+  const sr=new Date(weather.daily.sunrise[di]),ss=new Date(weather.daily.sunset[di]);
+  const mSr=Math.abs(d-sr)/6e4,mSs=Math.abs(d-ss)/6e4;
+  if(mSr<=75||mSs<=75)return SP[sp].light.dawnDusk;
+  if(d>sr&&d<ss){
+    /* Heavy cloud keeps the light low, so the daytime penalty softens toward the
+       dawn-dusk value for low-light feeders: at full overcast, half-way there. */
+    let f=SP[sp].light.day;
+    const cl=idx!=null?cloudAt(idx):null;
+    if(cl!=null&&cl>=60&&SP[sp].light.dawnDusk>f)
+      f+=(SP[sp].light.dawnDusk-f)*0.5*clamp((cl-60)/40,0,1);
+    return f;
+  }
+  return SP[sp].light.night}
+function tempFactor(sp,w,idx){
+  const t=sstAt(w,idx);if(t==null)return .8;
+  const[a,b,c,d]=SP[sp].temp;
+  if(t<=a||t>=d)return .15;
+  if(t<b)return .15+(t-a)/(b-a)*.85;
+  if(t<=c)return 1;
+  return .15+(d-t)/(d-c)*.85}
+
+/* ============================ SPOT CONDITIONS (access) ============================ */
+function scoreSpot(spot,idx){
+  const w=windAt(idx);const reasons=[];let s=58;
+  const diff=angDiff(w.dir,spot.offshoreDeg);
+  const offshore=diff<=spot.arc,onshore=diff>=120;
+  if(offshore){s+=Math.round(14*(1-diff/spot.arc))+4;
+    reasons.push({good:true,txt:dirName(w.dir)+" is offshore here"})}
+  else if(onshore){
+    const pen=spot.exposure==="surf"?(8+w.spd*1.4):(spot.mode==="boat"?(6+w.spd*.9):(4+w.spd*.7));
+    s-=pen;reasons.push({good:false,txt:dirName(w.dir)+" blows straight onshore"})}
+  else reasons.push({good:null,txt:dirName(w.dir)+" is cross-shore"});
+  if(spot.mode==="boat"){
+    if(w.spd>spot.maxWind+4){s=Math.min(s,20);reasons.push({good:false,txt:Math.round(w.spd)+" kn is too much for this water"})}
+    else if(w.spd>spot.maxWind){s-=18;reasons.push({good:false,txt:Math.round(w.spd)+" kn is at the limit"})}
+    else if(w.spd<=8){s+=10;reasons.push({good:true,txt:"light "+Math.round(w.spd)+" kn"})}
+    else s-=(w.spd-8)*1.2;
+  }else{
+    if(spot.exposure==="surf"){if(offshore&&w.spd<=20)s+=4;if(!offshore&&w.spd>12)s-=8}
+    if(w.spd>20){s-=(w.spd-20)*1.5;reasons.push({good:false,txt:"blowy at "+Math.round(w.spd)+" kn"})}
+  }
+  if(w.gust-w.spd>12){s-=6;reasons.push({good:false,txt:"gusty"})}
+  const wv=waveAt(spot.water,idx);
+  if(wv!=null){
+    if(spot.exposure==="surf"){
+      /* Ocean beaches: smaller-than-average swell outfishes big surf, so the model
+         rewards below-average swell more than it ever rewarded "ideal" surf, and
+         marks big swell down harder. The swell is always reported against the
+         running forecast average for this coast. */
+      const av=avgWave(spot.water);
+      if(wv>3){s-=22;reasons.push({good:false,txt:wv.toFixed(1)+" m swell — dangerous, stay off the beach"})}
+      else if(av){
+        const ratio=wv/av;
+        if(ratio<=0.85){s+=10;reasons.push({good:true,txt:wv.toFixed(1)+" m swell, under the "+av.toFixed(1)+" m average — clean gutters, easy to hold bottom"})}
+        else if(ratio<=1.15){s+=3;reasons.push({good:true,txt:wv.toFixed(1)+" m swell, around the "+av.toFixed(1)+" m average"})}
+        else if(ratio<=1.6){s-=9;reasons.push({good:false,txt:wv.toFixed(1)+" m swell, above the "+av.toFixed(1)+" m average — heavy water"})}
+        else{s-=15;reasons.push({good:false,txt:wv.toFixed(1)+" m swell, well above average — big and dirty"})}
+      }
+      else if(wv>=0.8&&wv<=2.2){s+=6;reasons.push({good:true,txt:wv.toFixed(1)+" m surf, fishable gutters"})}
+    }else if(spot.mode==="boat"){
+      if(wv>1.2){s-=12;reasons.push({good:false,txt:wv.toFixed(1)+" m sea"})}
+      else if(wv<0.5)s+=4;
+    }
+  }
+  const t=tideStateFor(spot,idx);
+  if(t.state!=="unknown"){
+    if(spot.tidePref==="slack"){
+      if(t.state==="slack"){s+=14;reasons.push({good:true,txt:"slack water, the window here"})}
+      else{s-=10;reasons.push({good:false,txt:"current running, wait for slack"})}
+    }else if(t.state==="rising"){s+=8;reasons.push({good:true,txt:"tide running in"})}
+    else if(t.state==="falling"){s+=5;reasons.push({good:true,txt:"tide running out"})}
+  }
+  if(SLACK_LAG[spot.id]&&t.nearChange)
+    reasons.push({good:true,txt:"slack here lags the bay turn ~"+SLACK_LAG[spot.id]+" min"});
+  /* wind against tide: nasty short chop in Western Port and the southern channels */
+  const axis=FLOW_TO[spot.water];
+  if(axis!=null&&(spot.water==="wp"||spot.id==="south-channel"||spot.id==="chinamans")&&w.spd>=12&&t.state!=="slack"&&t.state!=="unknown"){
+    const flowTo=t.state==="rising"?axis:(axis+180)%360;
+    const windTo=(w.dir+180)%360;
+    if(angDiff(windTo,flowTo)>=140){
+      const pen=Math.min(20,8+(w.spd-12)*1.2);
+      s-=pen;reasons.push({good:false,txt:"wind against tide chop"});
+    }
+  }
+  if(w.rain>=60)s-=5;
+  return{score:Math.round(clamp(s,0,100)),reasons}
+}
+
+/* ============================ CATCH PROBABILITY ============================ */
+function biteProb(sp,spot,idx){
+  if(!spot.species.includes(sp))return null;
+  const iso=weather.hourly.time[idx];
+  const month=new Date(iso).getMonth();
+  const season=SP[sp].season[month];
+  const temp=tempFactor(sp,spot.water,idx);
+  const hPa=pressureAt(idx),t3=pressureTrend3(idx);
+  const pRaw=pressureLevelScore(hPa)*.35+pressureTrendScore(t3)*.65;
+  const pF=1-SP[sp].pSens*(1-pRaw);
+  const ts=tideStateFor(spot,idx);
+  let tF=SP[sp].tide[ts.state==="unknown"?"rising":ts.state]||.8;
+  if(ts.nearChange)tF=Math.max(tF,SP[sp].tide.change);
+  /* whiting and squid hate hard Western Port current */
+  if((sp==="whiting"||sp==="squid"||sp==="garfish")&&spot.water==="wp"&&Math.abs(ts.rate)>0.32)tF*=.65;
+  const spr=tidalRange(spot.water).s;
+  let sizeF=1;
+  if(sp==="whiting"||sp==="gummy shark")sizeF=0.85+0.25*spr;
+  else if(sp==="squid"||sp==="garfish")sizeF=1.08-0.22*spr;
+  else if(sp==="snapper")sizeF=0.95+0.1*spr;
+  /* recent rain dirties inshore water: clarity-sensitive species back off */
+  let rainF=1;
+  const r48=recentRain();
+  if(r48!=null&&(sp==="whiting"||sp==="squid"||sp==="garfish")&&spot.water!=="ocean"){
+    if(r48>=35)rainF=0.7;else if(r48>=20)rainF=0.82;else if(r48>=10)rainF=0.93;
+  }
+  const lF=lightFactor(sp,iso,idx);
+  const mF=moonFactor(sp,new Date(iso));
+  const bite=100*season*temp*sizeF*rainF*(0.32*pF+0.27*tF+0.27*lF+0.14*mF);
+  const access=scoreSpot(spot,idx).score;
+  let prob=bite*.68+access*.32;
+  if(access<30)prob=Math.min(prob,25);
+  if(learned.ready){
+    const f=featuresNow(spot,idx);
+    const ml=100*sigm(learned.b+learned.w.reduce((s2,wj,j)=>s2+wj*f[j],0));
+    prob=prob*(1-learned.alpha)+ml*learned.alpha;
+  }
+  return Math.round(clamp(prob,2,96));
+}
+function bestForSpecies(sp,fromIdx,hours){
+  /* fish odds first, human comfort as a gentle tiebreak (up to 3 points) */
+  let best={p:-1,key:-1};
+  for(let i=fromIdx;i<Math.min(fromIdx+hours,weather.hourly.time.length);i++){
+    const cB=comfortAt(i).score*3;
+    for(const spot of SPOTS){
+      const p=biteProb(sp,spot,i);
+      if(p!=null&&p+cB>best.key)best={p,key:p+cB,spot,idx:i};
+    }
+  }return best.p<0?null:best}
+function bestOverall(idx,speciesSet){
+  const list=speciesSet&&speciesSet.size?[...speciesSet]:SPECIES;
+  let best={p:-1};
+  for(const sp of list)for(const spot of SPOTS){
+    const p=biteProb(sp,spot,idx);
+    if(p!=null&&p>best.p)best={p,sp,spot};
+  }return best.p<0?null:best}
+
+/* ============================ RENDER ============================ */
+function renderAll(){
+  _trCache={};_awCache={};_csCache={};
+  renderBaro();renderCompass();renderWindSpark();renderTide();renderSea();
+  renderSpeciesChips();renderPlaybooks();renderSpots();renderVerdict();renderOutlook();wireEmail();renderLog();
+}
+
+function renderBaro(){
+  const hPa=pressureAt(nowIdx),t3=pressureTrend3(nowIdx);
+  if(hPa==null){$("#pNow").textContent="–";$("#pVerdict").textContent="Pressure unavailable.";return}
+  $("#pNow").textContent=hPa.toFixed(0);
+  const info=pressureText(hPa,t3);
+  const tEl=$("#pTrend");
+  const arrow=t3<=-0.5?"\u2198":(t3<0.5?"\u2192":"\u2197");
+  tEl.textContent=arrow+" "+(t3>0?"+":"")+t3.toFixed(1)+" hPa / 3 h";
+  tEl.className="trend "+(pressureTrendScore(t3)>=0.85?"go":pressureTrendScore(t3)>=0.55?"hold":"stop");
+  $("#pVerdict").textContent=info.verdict;
+  /* sparkline: past 12 h to +24 h */
+  const p=weather.hourly.pressure_msl,from=Math.max(0,nowIdx-12),to=Math.min(p.length-1,nowIdx+24);
+  const seg=p.slice(from,to+1),min=Math.min(...seg),max=Math.max(...seg),W=300,H=46;
+  const X=i=>(i-from)/(to-from)*W,Y=v=>H-8-((v-min)/(max-min||1))*(H-18);
+  let path="";seg.forEach((v,j)=>{path+=(j?"L":"M")+X(from+j).toFixed(1)+","+Y(v).toFixed(1)+" "});
+  const nx=X(nowIdx);
+  $("#pSpark").innerHTML=`<path d="${path}" fill="none" stroke="var(--tide)" stroke-width="2.2"/>
+    <line x1="${nx}" y1="4" x2="${nx}" y2="${H-4}" stroke="var(--ink)" stroke-width="1.3" stroke-dasharray="4 3"/>
+    <text x="2" y="10" font-size="8.5" fill="var(--ink-soft)">${max.toFixed(0)}</text>
+    <text x="2" y="${H-2}" font-size="8.5" fill="var(--ink-soft)">${min.toFixed(0)}</text>`;
+}
+
+function renderCompass(){
+  const w=windAt(nowIdx);
+  const ticks=[];
+  for(let i=0;i<16;i++){const a=i*22.5*Math.PI/180,r1=i%4===0?46:52,r2=57;
+    ticks.push(`<line x1="${65+r1*Math.sin(a)}" y1="${65-r1*Math.cos(a)}" x2="${65+r2*Math.sin(a)}" y2="${65-r2*Math.cos(a)}" stroke="var(--line)" stroke-width="${i%4===0?2:1}"/>`)}
+  const lbl=(t,ang)=>{const a=ang*Math.PI/180;
+    return `<text x="${65+38*Math.sin(a)}" y="${65-38*Math.cos(a)+4}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink-soft)">${t}</text>`};
+  const to=(w.dir+180)%360;
+  $("#compassSvg").innerHTML=`
+    <circle cx="65" cy="65" r="58" fill="var(--paper)" stroke="var(--line)"/>
+    ${ticks.join("")}${lbl("N",0)}${lbl("E",90)}${lbl("S",180)}${lbl("W",270)}
+    <g class="needle" style="transform-origin:65px 65px;transform:rotate(${to}deg)">
+      <path d="M65 18 L71 52 L65 46 L59 52 Z" fill="var(--tide)"/>
+      <line x1="65" y1="46" x2="65" y2="100" stroke="var(--tide)" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <circle cx="65" cy="65" r="4.5" fill="var(--ink)"/>`;
+  $("#wSpd").textContent=Math.round(w.spd);
+  $("#wDir").textContent="From the "+dirName(w.dir)+" ("+Math.round(w.dir)+"\u00B0)";
+  $("#wGust").textContent="Gusting "+Math.round(w.gust)+" kn \u00B7 "+Math.round(w.temp)+"\u00B0C \u00B7 "+moonName(new Date());
+}
+
+function renderWindSpark(){
+  const h=weather.hourly,n=12,W=300,H=46;
+  let maxS=1;for(let i=0;i<n;i++)maxS=Math.max(maxS,h.wind_gusts_10m[nowIdx+i]||0);
+  const x=i=>i/(n-1)*W,y=v=>H-6-(v/maxS)*(H-14);
+  let pS="",pG="";
+  for(let i=0;i<n;i++){const c=i?"L":"M";
+    pS+=`${c}${x(i)},${y(h.wind_speed_10m[nowIdx+i])} `;pG+=`${c}${x(i)},${y(h.wind_gusts_10m[nowIdx+i])} `}
+  const labels=[0,6,11].map(i=>`<text x="${x(i)}" y="${H-1}" font-size="8.5" fill="var(--ink-soft)" text-anchor="${i===0?"start":i===11?"end":"middle"}">${fmtTime(h.time[nowIdx+i])}</text>`).join("");
+  $("#windSpark").innerHTML=`<path d="${pG}" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <path d="${pS}" fill="none" stroke="var(--tide)" stroke-width="2.5" stroke-linecap="round"/>${labels}`;
+}
+
+function renderTide(){
+  const s=tideSeries(activeWater);
+  const svg=$("#tideSvg"),evBox=$("#tideEvents"),nowBox=$("#tideNow");
+  if(!s){svg.innerHTML="";evBox.innerHTML="";nowBox.textContent="Tide model unavailable for this water.";return}
+  const from=Math.max(0,nowIdx-4),to=Math.min(s.h.length-1,nowIdx+44);
+  const seg=s.h.slice(from,to+1),min=Math.min(...seg),max=Math.max(...seg),W=320,H=90;
+  const X=i=>(i-from)/(to-from)*W,Y=v=>H-10-((v-min)/(max-min||1))*(H-24);
+  let path="";seg.forEach((v,j)=>{path+=(j?"L":"M")+X(from+j).toFixed(1)+","+Y(v).toFixed(1)+" "});
+  const nx=X(nowIdx);
+  svg.innerHTML=`<path d="${path} L${W},${H} L0,${H} Z" fill="var(--tide-soft)"/>
+    <path d="${path}" fill="none" stroke="var(--tide)" stroke-width="2.5"/>
+    <line x1="${nx}" y1="6" x2="${nx}" y2="${H-4}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="${clamp(nx+4,4,W-34)}" y="14" font-size="9.5" font-weight="700" fill="var(--ink)">now</text>`;
+  const st=tideState(activeWater,nowIdx);
+  const cs=currentStrength(activeWater,nowIdx);
+  nowBox.textContent="The tide is "+(st.state==="slack"?"near slack":st.state)+" on "+WATER_POINTS[activeWater].label+
+    ". Current: "+cs.label+(cs.n>=0.18?" \u2014 "+(cs.rate).toFixed(2)+" m/h, about "+Math.round(cs.n*100)+"% of this water's peak flow":"")+"."+
+    (activeWater==="bay"?" Near the Heads the turn lags: South Channel edge about +30 min, Popes Eye water about +45 min.":"");
+  const evs=tideEvents(activeWater,nowIdx,4);
+  evBox.innerHTML=evs.map(e=>`<div class="tide-ev"><b>${e.type} ${fmtTime(e.t)}</b><br>${fmtDay(e.t)} \u00B7 ${e.h.toFixed(1)} m</div>`).join("");
+  const tr=tidalRange(activeWater);
+  const chip=$("#springChip");chip.textContent=tr.label;chip.className="spring-chip "+tr.cls;
+}
+
+function renderSea(){
+  const cells=[];
+  for(const k of Object.keys(WATER_POINTS)){
+    const wv=waveAt(k,nowIdx),sst=sstAt(k,nowIdx);
+    cells.push(`<div class="sea-cell">${WATER_POINTS[k].label}<b>${wv!=null?wv.toFixed(1)+" m":"–"}</b>${sst!=null?sst.toFixed(1)+"\u00B0C water":""}</div>`);
+  }
+  const w=windAt(nowIdx);
+  cells.push(`<div class="sea-cell">Rain chance<b>${w.rain}%</b>next hour</div>`);
+  const r48=recentRain();
+  if(r48!=null)cells.push(`<div class="sea-cell">Rain, last 48 h<b>${r48.toFixed(0)} mm</b>${rainWord(r48)}</div>`);
+  if(satData.chl!=null)cells.push(`<div class="sea-cell">Chlorophyll (satellite)<b>${satData.chl.toFixed(2)} mg/m\u00B3</b>${chlWord(satData.chl)}</div>`);
+  if(satData.sst.bay!=null)cells.push(`<div class="sea-cell">Water temps above are<b>satellite</b>MUR 1 km observation</div>`);
+  $("#seaGrid").innerHTML=cells.join("");
+}
+
+function renderSpeciesChips(){
+  const box=$("#speciesChips");
+  if(box.childElementCount)return;
+  box.innerHTML=SPECIES.map(sp=>`<button class="chip" data-sp="${sp}">${sp}</button>`).join("");
+  box.addEventListener("click",e=>{
+    const b=e.target.closest("button[data-sp]");if(!b)return;
+    const sp=b.dataset.sp;
+    if(filterSpecies.has(sp)){filterSpecies.delete(sp);b.classList.remove("on")}
+    else{filterSpecies.add(sp);b.classList.add("on")}
+    renderPlaybooks();renderSpots();renderVerdict();wireEmail();
+  });
+}
+
+function renderPlaybooks(){
+  const box=$("#playbooks");
+  if(!filterSpecies.size){box.innerHTML="";return}
+  box.innerHTML=[...filterSpecies].map(sp=>{
+    const pb=PLAYBOOK[sp];
+    const best=bestForSpecies(sp,nowIdx,24);
+    const win=best?`Best window: ${fmtTime(weather.hourly.time[best.idx])} at ${best.spot.name} (${best.p}%)`:"No window found";
+    return `<div class="card playbook">
+      <div class="pb-head"><h3>${cap(sp)} playbook</h3><span class="pb-window">${win}</span></div>
+      <dl class="pb-grid">
+        <dt>Rig</dt><dd>${pb.rig}</dd>
+        <dt>Bait</dt><dd>${pb.bait}</dd>
+        <dt>Method</dt><dd>${pb.method}</dd>
+        <dt>Limits</dt><dd>${LIMITS[sp].size}; bag ${LIMITS[sp].bag}.${LIMITS[sp].note?" "+LIMITS[sp].note:""}</dd>
+      </dl>
+      <div class="pb-links">
+        <a href="#" data-rig="${sp}">View rig diagram</a>
+        <a href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(RIGS[sp].q)}" target="_blank" rel="noopener">Rig photos on the web</a>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function dialSVG(v,isProb){
+  const cls=isProb?probClass(v):scoreClass(v);
+  const col=cls==="go"?"var(--go)":cls==="hold"?"var(--hold)":"var(--stop)";
+  const r=24,c=2*Math.PI*r,off=c*(1-v/100);
+  return `<svg viewBox="0 0 58 58" width="58" height="58">
+    <circle cx="29" cy="29" r="${r}" fill="none" stroke="var(--paper)" stroke-width="6"/>
+    <circle cx="29" cy="29" r="${r}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round"
+      stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 29 29)"/>
+    <text x="29" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)" font-family="var(--display)">${v}</text>
+    <text x="29" y="41" text-anchor="middle" font-size="7.5" fill="var(--ink-soft)">${isProb?"bite %":"access"}</text>
+  </svg>`;
+}
+
+function spotRows(){
+  return SPOTS.map(spot=>{
+    const cond=scoreSpot(spot,nowIdx);
+    const probs=SPECIES.filter(sp=>spot.species.includes(sp))
+      .map(sp=>({sp,p:biteProb(sp,spot,nowIdx)}))
+      .sort((a,b)=>b.p-a.p);
+    const selProbs=probs.filter(x=>filterSpecies.has(x.sp));
+    const rank=filterSpecies.size?(selProbs.length?Math.max(...selProbs.map(x=>x.p)):-1):cond.score;
+    return{spot,cond,probs,selProbs,rank};
+  }).sort((a,b)=>b.rank-a.rank);
+}
+
+function renderSpots(){
+  const rows=spotRows().filter(r=>{
+    if(filterMode!=="all"&&r.spot.mode!==filterMode)return false;
+    if(filterSpecies.size&&!r.selProbs.length)return false;
+    return true;
+  });
+  $("#spotList").innerHTML=rows.map((r,ri)=>{
+    const why=r.cond.reasons.slice(0,3).map(x=>
+      x.good===true?`<span class="good">${x.txt}</span>`:x.good===false?`<span class="warn">${x.txt}</span>`:x.txt).join(", ");
+    const shown=filterSpecies.size?r.selProbs:r.probs.slice(0,3);
+    const probChips=shown.map(x=>`<span class="prob ${probClass(x.p)}">${x.sp} ${x.p}%</span>`).join("")+
+      (filterSpecies.size?"":r.probs.slice(3).map(x=>`<span class="prob dim">${x.sp} ${x.p}%</span>`).join(""));
+    const dialVal=filterSpecies.size&&r.selProbs.length?r.selProbs[0].p:r.cond.score;
+    const dialLbl=filterSpecies.size&&r.selProbs.length?cap(r.selProbs[0].sp):
+      (r.cond.score>=72?"Good access":r.cond.score>=48?"Workable":"Poor access");
+    return `<article class="spot">
+      <div class="score">${dialSVG(dialVal,!!filterSpecies.size)}<div class="lbl ${filterSpecies.size?probClass(dialVal):scoreClass(dialVal)}">${dialLbl}</div></div>
+      <div>
+        <h3>${r.spot.name}
+          <span class="tag ${r.spot.mode}">${r.spot.mode==="land"?"Land":"Boat"}</span>
+          <span class="tag drive">${r.spot.drive} min from Rosebud</span>
+        </h3>
+        <div class="why">${cap(why)}.</div>
+        <div class="prob-row">${probChips}</div>
+        ${ri<3?`<div class="notes">${r.spot.notes}</div>`:
+          `<details class="spot-more"><summary>Local notes</summary><div class="notes">${r.spot.notes}</div></details>`}
+        <div class="maplinks">
+          <a href="${chartLink(r.spot.lat,r.spot.lon)}" target="_blank" rel="noopener">Open nautical chart</a>
+          <a href="${satLink(r.spot.lat,r.spot.lon)}" target="_blank" rel="noopener">Satellite view</a>
+        </div>
+      </div>
+    </article>`;
+  }).join("")||`<div class="card">No spots match those filters. Clear a species chip or switch mode.</div>`;
+  updateMap();
+}
+
+function renderVerdict(){
+  const best=bestOverall(nowIdx,filterSpecies);
+  const w=windAt(nowIdx);const hPa=pressureAt(nowIdx),t3=pressureTrend3(nowIdx);
+  if(!best)return;
+  const cls=probClass(best.p);
+  const wEl=$("#vWord");wEl.className="word "+cls;
+  wEl.textContent=best.p>=60?"Get out there":best.p>=40?"Pick your moment":"Hard day on the water";
+  const pt=pressureText(hPa,t3);
+  const cf=comfortAt(nowIdx);
+  $("#vReason").textContent=`Wind ${Math.round(w.spd)} kn from the ${dirName(w.dir)}, barometer ${hPa!=null?hPa.toFixed(0):"–"} hPa and ${pt.dir}. ${pt.verdict} Out there it feels like ${Math.round(cf.feels)}° (${cf.label})${cf.score<0.6?" — rug up":""}.`;
+  $("#vTop").textContent=`${cap(best.sp)} at ${best.spot.name} (${best.p}%)`;
+  /* best window in next 24h across selected or all species */
+  const list=filterSpecies.size?[...filterSpecies]:SPECIES;
+  let win={p:-1};
+  for(const sp of list){const b=bestForSpecies(sp,nowIdx,24);
+    if(b&&b.p>win.p)win={...b,sp}}
+  $("#vWindow").textContent=win.p>=0?
+    `${cap(win.sp)}, ${fmtTime(weather.hourly.time[win.idx])} at ${win.spot.name} (${win.p}%)`:"—";
+  /* sun times and the next tide on the top bet's water */
+  const today=weather.hourly.time[nowIdx].slice(0,10);
+  const di=weather.daily.time.indexOf(today);
+  let meta="";
+  if(di>=0)meta+=`<span>Sun <b>${fmtTime(weather.daily.sunrise[di])} – ${fmtTime(weather.daily.sunset[di])}</b></span>`;
+  const nt=tideEvents(best.spot.water,nowIdx,1)[0];
+  if(nt)meta+=`<span>${WATER_POINTS[best.spot.water].label.split(" (")[0]} tide: <b>${nt.type.toLowerCase()} ${fmtTime(nt.t)}</b></span>`;
+  const mCf=comfortAt(nowIdx);
+  meta+=`<span>Feels <b>${Math.round(mCf.feels)}° ${mCf.label}</b></span>`;
+  const mCl=cloudAt(nowIdx);
+  if(mCl!=null)meta+=`<span>Cloud <b>${Math.round(mCl)}%</b>${mCl>=75?" — low light, bite windows run longer":""}</span>`;
+  $("#vMeta").innerHTML=meta;
+}
+
+function wxIcon(code){
+  const ink="var(--ink-soft)",sun="var(--hold)",rain="var(--tide)";
+  const sunSvg=`<circle cx="18" cy="18" r="7" fill="${sun}"/>`+
+    [0,45,90,135,180,225,270,315].map(a=>{const r=a*Math.PI/180;
+      return `<line x1="${18+10*Math.cos(r)}" y1="${18+10*Math.sin(r)}" x2="${18+13*Math.cos(r)}" y2="${18+13*Math.sin(r)}" stroke="${sun}" stroke-width="2" stroke-linecap="round"/>`}).join("");
+  const cloud=(cx,cy,f)=>`<path d="M${cx-11},${cy} a6,6 0 0 1 6,-8 a8,8 0 0 1 15,2 a5,5 0 0 1 1,10 l-18,0 a5,5 0 0 1 -4,-4 Z" fill="${f}"/>`;
+  const drops=(n)=>Array.from({length:n},(_,i)=>`<line x1="${12+i*6}" y1="27" x2="${10+i*6}" y2="32" stroke="${rain}" stroke-width="2" stroke-linecap="round"/>`).join("");
+  let body="";
+  if(code===0)body=sunSvg;
+  else if(code<=2)body=`<circle cx="12" cy="12" r="6" fill="${sun}"/>`+cloud(20,20,ink);
+  else if(code===3)body=cloud(18,19,ink);
+  else if(code===45||code===48)body=[14,19,24].map(y=>`<line x1="8" y1="${y}" x2="28" y2="${y}" stroke="${ink}" stroke-width="2.4" stroke-linecap="round"/>`).join("");
+  else if(code>=51&&code<=57)body=cloud(18,17,ink)+drops(2);
+  else if((code>=61&&code<=67)||(code>=80&&code<=82))body=cloud(18,16,ink)+drops(3);
+  else if(code>=95)body=cloud(18,15,ink)+`<path d="M17,22 l-4,7 h4 l-3,6 8,-8 h-4 l3,-5 Z" fill="${sun}"/>`;
+  else body=cloud(18,19,ink);
+  return `<svg viewBox="0 0 36 36" aria-hidden="true">${body}</svg>`;
+}
+function dayPlan(dayIso){
+  const idxs=[];
+  weather.hourly.time.forEach((t,i)=>{if(t.slice(0,10)===dayIso){const h=new Date(t).getHours();if(h>=5&&h<=22)idxs.push(i)}});
+  if(!idxs.length)return null;
+  let minW=99,maxW=0,dirs={};
+  idxs.forEach(i=>{const sp=weather.hourly.wind_speed_10m[i];minW=Math.min(minW,sp);maxW=Math.max(maxW,sp);
+    const dn=dirName(weather.hourly.wind_direction_10m[i]);dirs[dn]=(dirs[dn]||0)+1});
+  const domDir=Object.entries(dirs).sort((a,b)=>b[1]-a[1])[0][0];
+  const mid=idxs[Math.floor(idxs.length/2)];
+  const pMid=pressureAt(mid),pTr=pressureTrend3(mid);
+  let bBoat={p:-1,key:-1},bLand={p:-1,key:-1},best=-1;
+  idxs.forEach(i=>{
+    const cB=comfortAt(i).score*3;
+    for(const sp of SPECIES)for(const spot of SPOTS){
+      const p=biteProb(sp,spot,i);if(p==null)continue;
+      if(p>best)best=p;
+      if(spot.mode==="boat"&&p+cB>bBoat.key)bBoat={p,key:p+cB,sp,spot,i};
+      if(spot.mode==="land"&&p+cB>bLand.key)bLand={p,key:p+cB,sp,spot,i};
+    }
+  });
+  const cfIdx=bLand.p>=0?bLand.i:(bBoat.p>=0?bBoat.i:mid);
+  return{idxs,minW,maxW,domDir,pMid,pTr,bBoat,bLand,best,cfIdx};
+}
+function renderBiteOutlook(){
+  const H=110,W=640,padL=24,padB=16;
+  const hours=[],probs=[];
+  const end=Math.min(weather.hourly.time.length,nowIdx+120);
+  for(let i=nowIdx;i<end;i++){
+    let best=0;
+    for(const sp of SPECIES)for(const spot of SPOTS){
+      const p=biteProb(sp,spot,i);if(p!=null&&p>best)best=p;
+    }
+    hours.push(i);probs.push(best);
+  }
+  if(hours.length<6){$("#outlookChart").innerHTML="";return}
+  const X=k=>padL+(W-padL-4)*k/(hours.length-1);
+  const Y=p=>H-padB-(p/100)*(H-padB-8);
+  let line="",area="M"+X(0)+","+(H-padB)+" ";
+  probs.forEach((p,k)=>{const pt=X(k).toFixed(1)+","+Y(p).toFixed(1);line+=(k?"L":"M")+pt+" ";area+="L"+pt+" "});
+  area+="L"+X(hours.length-1)+","+(H-padB)+" Z";
+  let svg=`<path d="${area}" fill="var(--tide-soft)"/><path d="${line}" fill="none" stroke="var(--tide)" stroke-width="2"/>`;
+  /* gridlines + axis */
+  [25,50,75].forEach(g=>{svg+=`<line x1="${padL}" y1="${Y(g)}" x2="${W-4}" y2="${Y(g)}" stroke="var(--line)" stroke-width="0.7"/>
+    <text x="2" y="${Y(g)+3}" font-size="8.5" fill="var(--ink-soft)">${g}</text>`});
+  /* day boundaries + labels */
+  let lastDay="";
+  hours.forEach((i,k)=>{
+    const day=weather.hourly.time[i].slice(0,10);
+    if(day!==lastDay){
+      if(k>0)svg+=`<line x1="${X(k)}" y1="6" x2="${X(k)}" y2="${H-padB}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>`;
+      const lbl=k===0?"Today":new Date(day).toLocaleDateString("en-AU",{weekday:"short"});
+      svg+=`<text x="${X(k)+3}" y="${H-4}" font-size="9" fill="var(--ink-soft)">${lbl}</text>`;
+      lastDay=day;
+    }
+  });
+  /* peak marker */
+  let pk=0;probs.forEach((p,k)=>{if(p>probs[pk])pk=k});
+  const pkP=probs[pk],pkCls=probClass(pkP),pkHex={go:"#2E7D4F",hold:"#C98A2B",stop:"#B5432E"}[pkCls];
+  svg+=`<circle cx="${X(pk)}" cy="${Y(pkP)}" r="4" fill="${pkHex}" stroke="#fff" stroke-width="1.5"/>
+    <text x="${clamp(X(pk)+6,padL,W-120)}" y="${clamp(Y(pkP)+3,14,H-padB-4)}" font-size="9.5" font-weight="700" fill="var(--ink)">peak ${pkP}% \u00B7 ${fmtTime(weather.hourly.time[hours[pk]])} ${new Date(weather.hourly.time[hours[pk]]).toLocaleDateString("en-AU",{weekday:"short"})}</text>`;
+  $("#outlookChart").innerHTML=svg;
+}
+function renderOutlook(){
+  renderBiteOutlook();
+  const d=weather.daily;
+  if(!d.weather_code){$("#fcStrip").innerHTML='<div style="font-size:12.5px;color:var(--ink-soft)">Daily forecast unavailable.</div>';$("#fcDetail").innerHTML="";return}
+  const n=Math.min(5,d.time.length);
+  if(selDay>=n)selDay=0;
+  let html="";
+  for(let i=0;i<n;i++){
+    const plan=dayPlan(d.time[i]);
+    const day=i===0?"Today":new Date(d.time[i]).toLocaleDateString("en-AU",{weekday:"short"});
+    html+=`<div class="fc-day${i===selDay?" on":""}" data-day="${i}" role="button" tabindex="0">
+      <div class="d">${day}</div>
+      ${wxIcon(d.weather_code[i])}
+      <div class="t"><b>${Math.round(d.temperature_2m_max[i])}°</b> / ${Math.round(d.temperature_2m_min[i])}°</div>
+      ${d.apparent_temperature_min?`<div class="r">feels ${Math.round(d.apparent_temperature_min[i])}° at dawn</div>`:""}
+      <div class="r">${dirName(d.wind_direction_10m_dominant[i])} to ${Math.round(d.wind_speed_10m_max[i])} kn</div>
+      <div class="r">Rain ${d.precipitation_probability_max[i]}%</div>
+      ${plan&&plan.best>=0?`<div class="bet"><span class="badge ${probClass(plan.best)}">bite ${plan.best}%</span></div>`:""}
+    </div>`;
+  }
+  $("#fcStrip").innerHTML=html;
+  const plan=dayPlan(d.time[selDay]);
+  if(!plan){$("#fcDetail").innerHTML="";return}
+  const cell=b=>b.p<0?"—":`<span class="badge ${probClass(b.p)}">${b.p}%</span> ${cap(b.sp)} at ${b.spot.name}, around ${fmtTime(weather.hourly.time[b.i])}`;
+  $("#fcDetail").innerHTML=`
+    <span class="k">Wind</span><span>${plan.domDir} ${Math.round(plan.minW)} to ${Math.round(plan.maxW)} kn through the day</span>
+    <span class="k">Pressure</span><span>${plan.pMid!=null?plan.pMid.toFixed(0)+" hPa "+(plan.pTr<=-0.5?"falling":plan.pTr<0.5?"steady":"rising"):"–"}</span>
+    <span class="k">Comfort</span><span>${comfortChip(plan.cfIdx)} at the recommended window</span>
+    <span class="k">Boat bet</span><span>${cell(plan.bBoat)}</span>
+    <span class="k">Land bet</span><span>${cell(plan.bLand)}</span>`;
+}
+
+/* ============================ EMAIL ============================ */
+function buildEmail(){
+  const d=new Date().toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"});
+  const w=windAt(nowIdx),hPa=pressureAt(nowIdx),t3=pressureTrend3(nowIdx);
+  const pt=pressureText(hPa,t3);
+  const lines=[];
+  lines.push("Arroz Fishing - Rosebud desk - "+d);
+  lines.push("");
+  lines.push("Wind: "+Math.round(w.spd)+" kn from the "+dirName(w.dir)+", gusting "+Math.round(w.gust));
+  lines.push("Barometer: "+(hPa!=null?hPa.toFixed(0):"-")+" hPa, "+(t3>0?"+":"")+t3.toFixed(1)+"/3h. "+pt.verdict);
+  lines.push("Moon: "+moonName(new Date()));
+  const cf=comfortAt(nowIdx);
+  lines.push("Comfort: feels like "+Math.round(cf.feels)+"C ("+cf.label+")"+(cf.score<0.6?" - rug up":""));
+  lines.push("");
+  lines.push("TOP BETS NEXT 24 HOURS");
+  const list=filterSpecies.size?[...filterSpecies]:SPECIES;
+  const bests=list.map(sp=>({sp,b:bestForSpecies(sp,nowIdx,24)}))
+    .filter(x=>x.b).sort((a,b)=>b.b.p-a.b.p).slice(0,3);
+  bests.forEach((x,i)=>{
+    lines.push((i+1)+". "+cap(x.sp)+" "+x.b.p+"% - "+x.b.spot.name+" around "+fmtTime(weather.hourly.time[x.b.idx]));
+    lines.push("   Bait: "+PLAYBOOK[x.sp].bait.split(".")[0]+".");
+    lines.push("   Limits: "+LIMITS[x.sp].size+", bag "+LIMITS[x.sp].bag+".");
+  });
+  lines.push("");
+  lines.push("Sent from the Arroz Fishing dashboard.");
+  return{subject:"Arroz Fishing best bets - "+d,body:lines.join("\n")};
+}
+function wireEmail(){
+  const e=buildEmail();
+  $("#emailBtn").href="mailto:"+EMAIL_TO+"?subject="+encodeURIComponent(e.subject)+"&body="+encodeURIComponent(e.body);
+}
+
+/* ============================ MAP ============================ */
+let map=null,markerLayer=null;
+const PROB_HEX={go:"#2E7D4F",hold:"#C98A2B",stop:"#B5432E"};
+function marksFor(spot){return MARKS[spot.id]||[{n:spot.name,lat:spot.lat,lon:spot.lon}]}
+function initMap(){
+  if(map||typeof L==="undefined")return;
+  map=L.map("map",{scrollWheelZoom:false});
+  /* Esri Ocean basemap: permitted for this use and shows bathymetry (depth shading) */
+  const oceanBase=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
+    {maxNativeZoom:13,maxZoom:17,attribution:"Esri, GEBCO, NOAA, Garmin"});
+  const oceanRef=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}",
+    {maxNativeZoom:13,maxZoom:17});
+  const depth=L.layerGroup([oceanBase,oceanRef]).addTo(map);
+  /* Satellite: the best free way to read weed beds and sand holes in the shallows */
+  const sat=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {maxZoom:18,attribution:"Esri, Maxar, Earthstar Geographics"});
+  /* if the primary basemap can't load, fall back to Carto Voyager once */
+  let tileFails=0,swapped=false;
+  oceanBase.on("tileerror",()=>{
+    tileFails++;
+    if(tileFails>=6&&!swapped){
+      swapped=true;map.removeLayer(depth);
+      L.tileLayer("https://{s}.basemap.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+        {subdomains:"abcd",maxZoom:17,attribution:"&copy; OpenStreetMap contributors &copy; CARTO"}).addTo(map);
+    }
+  });
+  const seamarks=L.tileLayer("https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png",
+    {maxZoom:18,attribution:"&copy; OpenSeaMap"}).addTo(map);
+  /* structure and artificial reef markers */
+  const structLayer=L.layerGroup();
+  STRUCTURE.forEach(x=>{
+    const icon=L.divIcon({className:"",html:`<div class="stx ${x.kind}">▲</div>`,iconSize:[16,16],iconAnchor:[8,8]});
+    const mk=L.marker([x.lat,x.lon],{icon});
+    mk.bindTooltip(x.n);
+    mk.bindPopup(`<div class="mk-pop"><b>${x.n}</b><br>
+      ${x.kind==="notake"?'<span class="warn">NO-TAKE marine park</span>':(x.kind==="artificial"?"Artificial reef / structure":x.kind==="shellfish"?"Restored shellfish reef":x.kind==="wreck"?"Shipwreck (protected — do not anchor into it)":"Natural reef")} · ${x.depth}${x.approx?" · position approximate":""}<br>
+      <div style="margin:3px 0">${x.sp}</div>
+      <div style="margin:2px 0;color:var(--ink-soft);font-size:12px">${x.note}</div>
+      <span class="mk-coord">${x.lat.toFixed(4)}, ${x.lon.toFixed(4)}</span><button class="mk-copy" data-copy="${x.lat.toFixed(5)}, ${x.lon.toFixed(5)}">Copy</button>
+      <div class="mk-links"><a href="${chartLink(x.lat,x.lon)}" target="_blank" rel="noopener">Chart</a>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${x.lat},${x.lon}" target="_blank" rel="noopener">Directions</a></div></div>`);
+    structLayer.addLayer(mk);
+  });
+  structLayer.addTo(map);
+  /* metre depth labels */
+  const depthLayer=L.layerGroup();
+  DEPTH_LABELS.forEach(d=>{
+    depthLayer.addLayer(L.marker([d.lat,d.lon],{interactive:false,
+      icon:L.divIcon({className:"",html:`<div class="dlbl">${d.d} m</div>`,iconSize:[30,13],iconAnchor:[-8,20]})}));
+  });
+  depthLayer.addTo(map);
+  /* boat ramps */
+  const rampLayer=L.layerGroup();
+  RAMPS.forEach(r=>{
+    const mk=L.marker([r.lat,r.lon],{icon:L.divIcon({className:"",
+      html:'<div class="rampic">R</div>',iconSize:[17,17],iconAnchor:[9,9]})});
+    mk.bindTooltip(r.n);
+    mk.bindPopup(`<div class="mk-pop"><b>${r.n}</b><br>Boat ramp · ${r.water==="wp"?"Western Port":"Port Phillip"}<br>
+      <div style="margin:2px 0;color:var(--ink-soft);font-size:12px">${r.note}</div>
+      <div class="mk-links"><a href="${r.cam}" target="_blank" rel="noopener">${r.camLbl}</a>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}" target="_blank" rel="noopener">Directions</a></div>
+      <div style="font-size:11px;color:var(--ink-soft);margin-top:3px">Boating Vic is the free official service (no sign-up): on the site, use the ramp finder to open this ramp\u2019s page and its camera, or get the free Boating Vic app \u2014 images refresh every 5 minutes.</div></div>`);
+    rampLayer.addLayer(mk);
+  });
+  rampLayer.addTo(map);
+  /* Seamap Australia benthic habitat: seagrass, macroalgae, reef and sand polygons */
+  const habitat=L.tileLayer.wms("https://geoserver.imas.utas.edu.au/geoserver/seamap/wms",
+    {layers:"seamap:SeamapAus_National_Benthic_Habitat_Layer",format:"image/png",
+     transparent:true,opacity:0.55,attribution:"Seamap Australia (IMAS), CC-BY"}).addTo(map);
+  /* Satellite ocean layers: MUR 1 km gap-filled SST and 8-day MODIS chlorophyll */
+  const sstWms=L.tileLayer.wms("https://coastwatch.pfeg.noaa.gov/erddap/wms/jplMURSST41/request",
+    {layers:"jplMURSST41:analysed_sst",format:"image/png",transparent:true,opacity:0.55,
+     attribution:"NASA JPL MUR SST via NOAA CoastWatch"});
+  const chlWms=L.tileLayer.wms("https://coastwatch.pfeg.noaa.gov/erddap/wms/erdMH1chla8day/request",
+    {layers:"erdMH1chla8day:chlorophyll",format:"image/png",transparent:true,opacity:0.55,
+     attribution:"NASA MODIS chlorophyll via NOAA CoastWatch"});
+  L.control.layers({"Depth chart":depth,"Satellite":sat},
+    {"Habitat: seagrass & reef":habitat,"Reefs & structure":structLayer,"Boat ramps":rampLayer,"Depth labels (m)":depthLayer,
+     "Sea temp (satellite)":sstWms,"Chlorophyll (bait & clarity)":chlWms,"Nautical marks":seamarks},
+    {position:"topright",collapsed:false}).addTo(map);
+  markerLayer=L.layerGroup().addTo(map);
+  const all=[];SPOTS.forEach(sp=>marksFor(sp).forEach(m=>all.push([m.lat,m.lon])));
+  map.fitBounds(all,{padding:[24,24]});
+}
+function updateMap(){
+  if(typeof L==="undefined"){
+    $("#map").innerHTML='<div style="padding:22px;font-size:13px;color:var(--ink-soft)">Map library could not load \u2014 open this file with an internet connection to see the marks map.</div>';
+    return}
+  initMap();if(!map||!weather)return;
+  markerLayer.clearLayers();
+  const rows=spotRows();
+  const bestId=rows.length?rows[0].spot.id:null;
+  rows.forEach(r=>{
+    const isBest=r.spot.id===bestId;
+    const val=filterSpecies.size&&r.selProbs.length?r.selProbs[0].p:
+      (filterSpecies.size?null:r.cond.score);
+    if(val==null)return; /* species filter on and spot lacks it */
+    const cls=filterSpecies.size?probClass(val):scoreClass(val);
+    const shown=(filterSpecies.size?r.selProbs:r.probs.slice(0,2));
+    const chips=shown.map(x=>`<span class="prob ${probClass(x.p)}">${x.sp} ${x.p}%</span>`).join("");
+    marksFor(r.spot).forEach(m=>{
+      const mk=L.circleMarker([m.lat,m.lon],{radius:isBest?12:8,color:"#12333F",
+        weight:isBest?3.5:1.5,fillColor:PROB_HEX[cls],fillOpacity:.92});
+      mk.bindTooltip(m.n);
+      mk.bindPopup(`<div class="mk-pop"><b>${r.spot.name}</b><br>${m.n} \u00B7 ${r.spot.mode==="land"?"land-based":"boat"}<br>
+        <div style="margin:4px 0">${chips}</div>
+        <span class="mk-coord">${m.lat.toFixed(4)}, ${m.lon.toFixed(4)}</span><button class="mk-copy" data-copy="${m.lat.toFixed(5)}, ${m.lon.toFixed(5)}">Copy</button>
+        <div class="mk-links"><a href="${chartLink(m.lat,m.lon)}" target="_blank" rel="noopener">Chart</a>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lon}" target="_blank" rel="noopener">Directions</a></div></div>`);
+      markerLayer.addLayer(mk);
+    });
+  });
+}
+
+/* ============================ LEARNED LAYER ============================ */
+/* A small regularised logistic regression trained on the catch log.
+   Physics stays in charge: its output is blended in at up to 30 per cent,
+   growing with the size of the log. */
+function featuresFromCond(c){
+  const pRaw=pressureLevelScore(c.hPa)*.35+pressureTrendScore(c.t3||0)*.65;
+  const tideMov=c.tide&&c.tide!=="slack"?1:0;
+  const sstN=c.sst!=null?clamp((c.sst-10)/12,0,1):0.5;
+  const windN=clamp((c.spd||10)/30,0,1);
+  return[pRaw,tideMov,sstN,windN];
+}
+function featuresNow(spot,idx){
+  const w=windAt(idx),ts=tideState(spot.water,idx);
+  return featuresFromCond({hPa:pressureAt(idx),t3:pressureTrend3(idx),
+    tide:ts.state,sst:sstAt(spot.water,idx),spd:w.spd});
+}
+const sigm=z=>1/(1+Math.exp(-z));
+function trainLog(){
+  const es=logStore.get().filter(e=>e.cond&&e.cond.prob!=null);
+  if(es.length<15){learned={ready:false,n:es.length};return}
+  const X=es.map(e=>featuresFromCond(e.cond)),y=es.map(e=>e.count>0?1:0);
+  let w=[0,0,0,0],b=0;const lr=0.3,l2=0.04,epochs=400,n=X.length;
+  for(let ep=0;ep<epochs;ep++){
+    let gb=0;const gw=[0,0,0,0];
+    for(let i=0;i<n;i++){
+      const err=sigm(b+w.reduce((s2,wj,j)=>s2+wj*X[i][j],0))-y[i];
+      gb+=err;for(let j=0;j<4;j++)gw[j]+=err*X[i][j];
+    }
+    b-=lr*gb/n;
+    for(let j=0;j<4;j++)w[j]-=lr*(gw[j]/n+l2*w[j]);
+  }
+  let hits=0;
+  for(let i=0;i<n;i++){const p=sigm(b+w.reduce((s2,wj,j)=>s2+wj*X[i][j],0));if((p>=.5)===(y[i]===1))hits++}
+  learned={ready:true,w,b,n,acc:Math.round(100*hits/n),
+    alpha:Math.min(0.3,n/150)};
+}
+
+/* GPX export of every mark, for Navionics Boating and chartplotters */
+function exportGpx(){
+  const esc=t=>String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  let wpts="";
+  SPOTS.forEach(spot=>{
+    marksFor(spot).forEach(m=>{
+      const name=spot.name===m.n?spot.name:spot.name+" \u2013 "+m.n;
+      wpts+=`  <wpt lat="${m.lat}" lon="${m.lon}">\n`+
+        `    <name>${esc(name)}</name>\n`+
+        `    <desc>${esc((spot.mode==="land"?"Land-based":"Boat")+" \u00B7 "+spot.species.join(", "))}</desc>\n`+
+        `    <sym>Fishing Hot Spot Facility</sym>\n  </wpt>\n`;
+    });
+  });
+  STRUCTURE.forEach(x=>{
+    const nm=x.kind==="notake"?x.n+" (NO-TAKE)":x.n;
+    wpts+=`  <wpt lat="${x.lat}" lon="${x.lon}">\n`+
+      `    <name>${esc(nm)}</name>\n`+
+      `    <desc>${esc(x.depth+" \u00B7 "+x.sp+(x.approx?" \u00B7 approx position":""))}</desc>\n`+
+      `    <sym>${x.kind==="wreck"?"Shipwreck":"Reef"}</sym>\n  </wpt>\n`;
+  });
+  RAMPS.forEach(r=>{
+    wpts+=`  <wpt lat="${r.lat}" lon="${r.lon}">\n    <name>${esc(r.n)}</name>\n    <desc>Boat ramp</desc>\n    <sym>Boat Ramp</sym>\n  </wpt>\n`;
+  });
+  const gpx=`<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Arroz Fishing Desk" xmlns="http://www.topografix.com/GPX/1/1">\n${wpts}</gpx>`;
+  dlFile("arroz-fishing-marks.gpx","application/gpx+xml",gpx);
+}
+
+/* ============================ CATCH LOG ============================ */
+/* Entries persist in this browser where supported; the export file is the durable copy. */
+const logStore={mem:[],
+  get(){try{const v=localStorage.getItem("arrozCatchLog");if(v)return JSON.parse(v)}catch(e){}return this.mem},
+  set(v){this.mem=v;try{localStorage.setItem("arrozCatchLog",JSON.stringify(v))}catch(e){}}};
+function initLogForm(){
+  const sSel=$("#logSpot"),pSel=$("#logSp");
+  if(sSel.childElementCount)return;
+  sSel.innerHTML=SPOTS.map(x=>`<option value="${x.id}">${x.name}</option>`).join("");
+  pSel.innerHTML=SPECIES.map(x=>`<option value="${x}">${cap(x)}</option>`).join("");
+}
+function addLogEntry(){
+  const spotId=$("#logSpot").value,sp=$("#logSp").value;
+  const spot=SPOTS.find(x=>x.id===spotId);
+  const w=windAt(nowIdx),hPa=pressureAt(nowIdx),t3=pressureTrend3(nowIdx);
+  const ts=tideState(spot.water,nowIdx),sst=sstAt(spot.water,nowIdx);
+  const entry={t:new Date().toISOString(),spotId,sp,
+    count:+($("#logCount").value||0),size:+($("#logSize").value||0)||null,
+    notes:$("#logNotes").value.trim(),
+    cond:{spd:Math.round(w.spd),dir:dirName(w.dir),cloud:cloudAt(nowIdx),rain48:recentRain(),hPa:hPa!=null?+hPa.toFixed(1):null,
+      t3:+t3.toFixed(1),tide:ts.state,sst:sst!=null?+sst.toFixed(1):null,
+      moon:moonName(new Date()),prob:biteProb(sp,spot,nowIdx)}};
+  const v=logStore.get();v.unshift(entry);logStore.set(v);
+  $("#logCount").value=0;$("#logSize").value="";$("#logNotes").value="";
+  renderLog();
+}
+function renderLog(){
+  initLogForm();
+  trainLog();
+  renderCatchChart();
+  const v=logStore.get();
+  $("#logCount2").textContent=v.length?v.length+" session"+(v.length>1?"s":"")+" logged":"No sessions yet";
+  $("#logTable tbody").innerHTML=v.slice(0,8).map((e,i)=>{
+    const spot=SPOTS.find(x=>x.id===e.spotId);
+    const d=new Date(e.t).toLocaleDateString("en-AU",{day:"numeric",month:"short"});
+    const res=e.count>0?e.count+" fish"+(e.size?", best "+e.size+" cm":""):"skunked";
+    const pv=e.cond&&e.cond.prob!=null?`<span class="badge ${probClass(e.cond.prob)}">${e.cond.prob}%</span>`:"\u2013";
+    const cond=e.cond?`${e.cond.spd} kn ${e.cond.dir}, ${e.cond.hPa??"\u2013"} hPa, tide ${e.cond.tide}`:"";
+    return `<tr><td>${d}</td><td>${cap(e.sp)}<br><span style="color:var(--ink-soft)">${spot?spot.name:e.spotId}</span></td>
+      <td>${res}${e.notes?`<br><span style="color:var(--ink-soft)">${e.notes}</span>`:""}</td>
+      <td>${pv}</td><td style="color:var(--ink-soft)">${cond}</td>
+      <td><button class="del" data-del="${i}" aria-label="Delete entry">\u00D7</button></td></tr>`;
+  }).join("")||`<tr><td colspan="6" style="color:var(--ink-soft)">Log your first session after fishing \u2014 conditions and the model's prediction are captured automatically.</td></tr>`;
+  /* calibration */
+  const bands=[{n:"under 40%",f:e=>e.cond&&e.cond.prob<40},{n:"40 to 60%",f:e=>e.cond&&e.cond.prob>=40&&e.cond.prob<60},{n:"over 60%",f:e=>e.cond&&e.cond.prob>=60}];
+  if(v.length<3){$("#calib").textContent="Calibration report appears after a few sessions. After 20 or more, the hit rates below tell us how to re-tune the weights to your water."}
+  else{
+    const parts=bands.map(b=>{const es=v.filter(b.f);if(!es.length)return null;
+      const hits=es.filter(e=>e.count>0).length;
+      return `when the model said ${b.n}: ${hits} of ${es.length} sessions caught fish`}).filter(Boolean);
+    let txt="Calibration so far \u2014 "+parts.join("; ")+".";
+    trainLog();
+    if(learned.ready){
+      const names=["pressure","tide movement","water temp","wind"];
+      const infl=learned.w.map((wj,j)=>({n:names[j],w:wj})).sort((a2,b2)=>Math.abs(b2.w)-Math.abs(a2.w))
+        .map(x=>x.n+(x.w>=0?" +":" \u2212")).join(", ");
+      txt+=` Learned layer is live: trained on ${learned.n} sessions (blended at ${Math.round(learned.alpha*100)}%, fit ${learned.acc}%). Your strongest personal signals: ${infl}.`;
+    }else if(v.length>=3){
+      txt+=` The learning layer switches on at 15 sessions (${learned&&learned.n!=null?learned.n:v.length} logged so far) \u2014 physics runs the show until then.`;
+    }
+    $("#calib").textContent=txt;
+  }
+}
+function renderCatchChart(){
+  const v=[...logStore.get()].filter(e=>e.cond).sort((a,b)=>a.t.localeCompare(b.t));
+  const wrap=$("#catchChartWrap");
+  if(v.length<2){wrap.style.display="none";return}
+  wrap.style.display="";
+  const W=640,H=120,pad=26,bw=Math.min(26,(W-pad-8)/v.length-4);
+  const maxC=Math.max(2,...v.map(e=>e.count));
+  const X=i=>pad+ (W-pad-8)*(i+0.5)/v.length;
+  const Yc=c=>H-18-(c/maxC)*(H-42);
+  const Yp=p=>H-18-(p/100)*(H-42);
+  let svg="";
+  /* axis */
+  svg+=`<line x1="${pad}" y1="${H-18}" x2="${W-4}" y2="${H-18}" stroke="var(--line)" stroke-width="1.5"/>`;
+  svg+=`<text x="2" y="${Yc(maxC)+4}" font-size="9" fill="var(--ink-soft)">${maxC}</text>`;
+  svg+=`<text x="2" y="${H-20}" font-size="9" fill="var(--ink-soft)">0</text>`;
+  v.forEach((e,i)=>{
+    const x=X(i);
+    if(e.count>0)
+      svg+=`<rect x="${x-bw/2}" y="${Yc(e.count)}" width="${bw}" height="${H-18-Yc(e.count)}" rx="2" fill="var(--tide)"><title>${new Date(e.t).toLocaleDateString("en-AU",{day:"numeric",month:"short"})}: ${e.count} ${e.sp}</title></rect>`;
+    else
+      svg+=`<rect x="${x-bw/2}" y="${H-24}" width="${bw}" height="6" rx="2" fill="var(--stop)"><title>${new Date(e.t).toLocaleDateString("en-AU",{day:"numeric",month:"short"})}: skunked (${e.sp})</title></rect>`;
+    if(e.cond.prob!=null)
+      svg+=`<circle cx="${x}" cy="${Yp(e.cond.prob)}" r="3" fill="var(--hold)"><title>model said ${e.cond.prob}%</title></circle>`;
+  });
+  const first=v[0],last=v[v.length-1];
+  svg+=`<text x="${pad}" y="${H-6}" font-size="9" fill="var(--ink-soft)">${new Date(first.t).toLocaleDateString("en-AU",{day:"numeric",month:"short"})}</text>`;
+  svg+=`<text x="${W-4}" y="${H-6}" font-size="9" fill="var(--ink-soft)" text-anchor="end">${new Date(last.t).toLocaleDateString("en-AU",{day:"numeric",month:"short"})}</text>`;
+  $("#catchChart").innerHTML=svg;
+}
+function dlFile(name,mime,content){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([content],{type:mime}));
+  a.download=name;document.body.appendChild(a);a.click();
+  URL.revokeObjectURL(a.href);a.remove();
+}
+function exportCsv(){
+  const v=logStore.get();
+  const head="date,spot,species,count,best_cm,predicted_prob,wind_kn,wind_dir,pressure_hPa,trend_3h,tide,water_C,moon,notes";
+  const rows=v.map(e=>{const spot=SPOTS.find(x=>x.id===e.spotId);const c=e.cond||{};
+    const esc=t=>'"'+String(t??"").replace(/"/g,'""')+'"';
+    return [e.t.slice(0,10),esc(spot?spot.name:e.spotId),e.sp,e.count,e.size??"",c.prob??"",c.spd??"",c.dir??"",c.hPa??"",c.t3??"",c.tide??"",c.sst??"",esc(c.moon),esc(e.notes)].join(",")});
+  dlFile("arroz-catch-log.csv","text/csv",[head,...rows].join("\n"));
+}
+function exportJson(){dlFile("arroz-catch-log-backup.json","application/json",JSON.stringify(logStore.get(),null,1))}
+function importJson(file){
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const inc=JSON.parse(r.result);
+    if(!Array.isArray(inc))throw 0;
+    const cur=logStore.get();
+    const seen=new Set(cur.map(e=>e.t));
+    inc.forEach(e=>{if(e&&e.t&&!seen.has(e.t))cur.push(e)});
+    cur.sort((a,b)=>b.t.localeCompare(a.t));
+    logStore.set(cur);renderLog();
+  }catch(e){alert("That file doesn't look like a catch-log backup.")}};
+  r.readAsText(file);
+}
+
+/* ============================ EVENTS ============================ */
+$("#tideTabs").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-w]");if(!b)return;
+  activeWater=b.dataset.w;
+  document.querySelectorAll("#tideTabs button").forEach(x=>x.classList.toggle("on",x===b));
+  renderTide();
+});
+$("#modeSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-m]");if(!b)return;
+  filterMode=b.dataset.m;
+  document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("on",x===b));
+  renderSpots();
+});
+$("#refreshBtn").addEventListener("click",loadAll);
+$("#sampleBtn").addEventListener("click",loadSample);
+
+/* bag and size limits list */
+$("#limitsList").innerHTML=SPECIES.map(sp=>{
+  const l=LIMITS[sp];
+  return `<div class="limit-row"><b>${cap(sp)}</b><div class="lr">Size: <em>${l.size}</em> \u00B7 Bag: <em>${l.bag}</em></div>${l.note?`<details class="lim-more"><summary>Detail</summary><div>${l.note}</div></details>`:""}</div>`;
+}).join("");
+
+/* rig diagram list + modal */
+$("#rigList").innerHTML=SPECIES.map(sp=>
+  `<a href="#" data-rig="${sp}">${cap(sp)}<small>${RIGS[sp].title.replace(cap(sp)+" ","")}</small></a>`).join("");
+document.addEventListener("click",e=>{
+  const r=e.target.closest("[data-rig]");
+  if(r){e.preventDefault();openRig(r.dataset.rig);return}
+  const cp=e.target.closest(".mk-copy");
+  if(cp){try{navigator.clipboard.writeText(cp.dataset.copy);cp.textContent="Copied";setTimeout(()=>cp.textContent="Copy",1200)}catch(err){}return}
+  const del=e.target.closest("[data-del]");
+  if(del){const v=logStore.get();v.splice(+del.dataset.del,1);logStore.set(v);renderLog();return}
+  if(e.target.id==="rigOverlay")closeRig();
+});
+$("#fcStrip").addEventListener("click",e=>{
+  const dEl=e.target.closest("[data-day]");if(!dEl)return;
+  selDay=+dEl.dataset.day;renderOutlook();
+});
+$("#gpxBtn").addEventListener("click",exportGpx);
+$("#logAdd").addEventListener("click",addLogEntry);
+$("#logCsv").addEventListener("click",exportCsv);
+$("#logJson").addEventListener("click",exportJson);
+$("#logImport").addEventListener("change",e=>{if(e.target.files[0])importJson(e.target.files[0]);e.target.value=""});
+$("#rigClose").addEventListener("click",closeRig);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeRig()});
+
+if(location.protocol==="https:"&&"serviceWorker" in navigator){
+  try{navigator.serviceWorker.register("sw.js")}catch(e){}
+}
+loadAll();
+</script>
+</body>
+</html>

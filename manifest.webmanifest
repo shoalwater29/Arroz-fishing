@@ -1,0 +1,15 @@
+{
+  "name": "Arroz Fishing",
+  "short_name": "Arroz",
+  "description": "Rosebud fishing desk: live bite predictions, tides, marks map and catch log for the southern Mornington Peninsula.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F2F7F5",
+  "theme_color": "#12333F",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
